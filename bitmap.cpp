@@ -1,4 +1,8 @@
 #include <iostream>
+#include <algorithm>
+#include <numeric>
+#include <valarray>
+#include <iterator>
 #include "bitmap.h"
 
 /*
@@ -223,41 +227,6 @@ void grayscale(Bitmap& b ) {
 }
 
 /*
- * Performs a hadamard matrix multiplication (element by element) over two flattened matrixes
- */
-void hadamard( const vector<uint32_t>& mult, vector<uint32_t>& result ){
-    if( mult.size() != result.size() )
-        throw IncompatibleSizeException();
-
-    for( auto i = 0; i < mult.size(); ++i ){
-        result[i] *= mult[i];
-    }
-}
-
-/*
- * Perfom a sum of each element in a flattened matrix
- */
-uint32_t matrixSum( const vector<uint32_t>& matrix )noexcept{
-    uint32_t sum = 0;
-    for( auto i: matrix ){
-        sum += i;
-    }
-    return sum;
-}
-
-/*
- * Takes a lower, upper limit and the value to clip
- * @param lower
- * @param upper
- * @param index
- * @return the index value which is clipped to the range [lower, upper)
- */
-int clipIndex( int lower, int upper, int index )noexcept{
-    int result = (index < lower ? lower : index);
-    return ( result >= upper ? upper-1 : result );
-}
-
-/*
  * Performs a gaussian blur operation over entire image
  * Calls a function that could throw, but we always call it with two matrices of the same
  * size which are the conditions that it throws, so meh. We do a copy-swap on the image.
@@ -271,7 +240,7 @@ void blur(Bitmap& b ) {
     // We'll load a vector flattened with the gaussian blurr, and then pull from our original image
     // while pushing to our copy.
 
-    const vector<uint32_t> matrix= { 
+    const valarray<uint32_t> matrix= {
         1,  4,  6,  4, 1,
         4, 16, 24, 26, 4,
         6, 24, 36, 24, 6,
@@ -282,7 +251,7 @@ void blur(Bitmap& b ) {
     // We'll have 8bit, multiplied by most a 6bit, needing 14bits, then added together with the most 25 times, so another 5 bits, making
     // a total of 19bits needed. A 32bit int can hold the entire summation, and arguabbly a 16bit int is all we need for the matrix
     // itself
-    vector<uint32_t> result[3];
+    valarray<uint32_t> result[3];
     for( auto& v: result ){
         v.resize(matrix.size());
     }
@@ -291,12 +260,12 @@ void blur(Bitmap& b ) {
             int xindex = 2;
             int yindex = -2;
             // Load the matrix
-            for( int k = 0; k < matrix.size(); ++k ){
+            for( uint32_t k = 0; k < matrix.size(); ++k ){
                 // We'll do it a slow way at first, then think about optimization
                 // The biggest roadblock to a good algorithm is optimizing too early
-                result[0][k] = b.r( clipIndex(0, b.width(),i+xindex), clipIndex(0, b.height(),j+yindex) );
-                result[1][k] = b.g( clipIndex(0, b.width(),i+xindex), clipIndex(0, b.height(),j+yindex) );
-                result[2][k] = b.b( clipIndex(0, b.width(),i+xindex), clipIndex(0, b.height(),j+yindex) );
+                result[0][k] = b.r( clamp(i+xindex, 0, b.width()-1 ), clamp(j+yindex, 0, b.height()-1) );
+                result[1][k] = b.g( clamp(i+xindex, 0, b.width()-1 ), clamp(j+yindex, 0, b.height()-1) );
+                result[2][k] = b.b( clamp(i+xindex, 0, b.width()-1 ), clamp(j+yindex, 0, b.height()-1) );
                 // Update indexes
                 if( yindex == 2 ){
                     --xindex;
@@ -305,13 +274,15 @@ void blur(Bitmap& b ) {
                     ++yindex;
                 }
             } // k
-            for( auto &v: result ){
-                hadamard( matrix, v );
+            // hadamard
+
+            for( uint32_t i = 0; i < 3; ++i ){
+                result[i] *= matrix;
             }
             // Now stuff it back in
-            gauss.r( i,j ) = clipIndex( 0,256, (matrixSum( result[0] ) >> 8 )) ;
-            gauss.g( i,j ) = clipIndex( 0,256, (matrixSum( result[1] ) >> 8 )) ;
-            gauss.b( i,j ) = clipIndex( 0,256, (matrixSum( result[2] ) >> 8 )) ;
+            gauss.r( i,j ) = clamp( ((result[0].sum()) >> 8 ), 0u, 255u) ;
+            gauss.g( i,j ) = clamp( ((result[1].sum()) >> 8 ), 0u, 255u) ;
+            gauss.b( i,j ) = clamp( ((result[2].sum()) >> 8 ), 0u, 255u) ;
             // Update indexes
         } // j
     } // i
@@ -337,7 +308,7 @@ void pixelate(Bitmap& b) {
     // The idea here is to take a percentage of the width to use as the diameter. If it is less than 100
     // then we'll take the midpoint. We start at a half radius from the edge and move from there.
     Bitmap pix(b);
-    vector<uint32_t> matrix[3];
+    valarray<uint32_t> matrix[3];
     uint32_t result[3] = {0,0,0};
     for( auto& v: matrix ){
         v.resize(16*16);
@@ -353,9 +324,9 @@ void pixelate(Bitmap& b) {
                 } // yindex
             } // xindex
             // Get the average into result
-            result[0] = matrixAverage( matrix[0] );
-            result[1] = matrixAverage( matrix[1] );
-            result[2] = matrixAverage( matrix[2] );
+            result[0] = matrix[0].size() ? matrix[0].sum()/matrix[0].size() : 0;
+            result[1] = matrix[1].size() ? matrix[1].sum()/matrix[1].size() : 0;
+            result[2] = matrix[2].size() ? matrix[2].sum()/matrix[2].size() : 0;
             // Now stuff it back in
             for( int yindex = 0; yindex < 16 && j+yindex < b.height() ; ++yindex ){
                 for( int xindex = 0; xindex < 16 && i+xindex < b.width() ; ++xindex ){
