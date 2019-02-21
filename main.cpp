@@ -94,6 +94,10 @@ int main(int argc, char** argv)
         {
             scaleDown(image);
         }
+        if(flag == "-binary")
+        {
+            binaryGray(image, ISOVALUE);
+        }
 
         out.open(outfile, ios::binary);
         out << image;

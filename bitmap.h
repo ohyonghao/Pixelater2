@@ -18,6 +18,7 @@ Let's first make our pixel class
 
 using namespace std;
 
+const uint32_t ISOVALUE = 127;
 class Bitmap
 {
 private:
@@ -142,6 +143,8 @@ public:
     inline uint32_t amask() const{ return a_mask; }
     inline bool     hasAlpha() const{ return dibs.cmpsn; }
 
+    auto& getBits(){return bits;}
+
     // This function sets the internal dimensions of the bitmap, and in doing so
     // it takes no regards for the image that was in it and should be considered
     // corrucpted.
@@ -202,3 +205,7 @@ void flipd1(Bitmap& b);
 void flipd2(Bitmap& b);
 void scaleUp(Bitmap& b);
 void scaleDown(Bitmap& b);
+
+// Final Functions
+
+void binaryGray( Bitmap &, const uint32_t isovalue);

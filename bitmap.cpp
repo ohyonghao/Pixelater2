@@ -606,3 +606,37 @@ void scaleDown(Bitmap& o ) {
     }
     swap( o, move(b) );
 }
+
+vector<pair<uint32_t,uint32_t>> findContours(const Bitmap& o)
+{
+    Bitmap b(o);
+
+    // Make it a binary by using a threshold and transforming the entire thing
+
+    // b = binary(b);
+    // Contouring cell is represented by 2x2 pixels
+    // Compose the 4 bits
+    // Walk around the cell from top left to bottom left, using bitwise OR and
+    // left-shift
+
+    // The grids are independent of other grids
+    binaryGray( b, ISOVALUE);
+    return vector<pair<uint32_t,uint32_t>>();
+}
+
+void binaryGray( Bitmap &o, const uint32_t isovalue){
+    grayscale(o);
+    transform(o.getBits().begin(), o.getBits().end(),o.getBits().begin(),
+              [&isovalue](auto value){return value > isovalue ? 255 : 0;});
+}
+uint8_t composeBits( const vector<uint32_t> cell ){
+    // cells are  flattened, going from top left to bottom left clockwise
+    uint8_t value = 0;
+    for(auto i: cell){
+        value <<= 1;
+        value |= i;
+    }
+    return value;
+}
+
+
