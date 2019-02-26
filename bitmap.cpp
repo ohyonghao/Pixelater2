@@ -3,6 +3,7 @@
 #include <numeric>
 #include <valarray>
 #include <iterator>
+#include <string>
 #include "bitmap.h"
 
 /*
@@ -607,7 +608,19 @@ void scaleDown(Bitmap& o ) {
     swap( o, move(b) );
 }
 
-vector<pair<uint32_t,uint32_t>> findContours(const Bitmap& o)
+// Here's what drives our function
+void contours(Bitmap&o){
+    Bitmap b(o);
+    binaryGray(b, ISOVALUE);
+
+    auto cont = findContours(b);
+    for( auto& i: cont[0]){
+        draw( b, i.first, i.second, 200, 10);
+    }
+    swap( o, move(b));
+}
+
+vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o)
 {
     Bitmap b(o);
 
@@ -616,12 +629,58 @@ vector<pair<uint32_t,uint32_t>> findContours(const Bitmap& o)
     // b = binary(b);
     // Contouring cell is represented by 2x2 pixels
     // Compose the 4 bits
-    // Walk around the cell from top left to bottom left, using bitwise OR and
-    // left-shift
 
     // The grids are independent of other grids
-    binaryGray( b, ISOVALUE);
-    return vector<pair<uint32_t,uint32_t>>();
+    //binaryGray( b, ISOVALUE);
+    transform( b.getBits().begin(), b.getBits().end(), b.getBits().begin(),
+        [](auto value){ return value == 255; } );
+
+    // For each bit we'll want to compose it into a new vector
+    uint32_t w = static_cast<uint32_t>(b.width());
+    // ensure against negative height
+    uint32_t h = static_cast<uint32_t>(b.height()*(b.height() < 0 ? -1:1));
+
+    // Our vector to put things in
+    vector<uint8_t> composed(w*h, 0);
+    // For now, our vector of points
+
+    vector<vector<pair<uint32_t,uint32_t>>> points(1);
+    int bpp = b.bpp();
+    auto lt = b.getBits().begin()+w*bpp+b.rmask();
+    auto rt = b.getBits().begin()+(w+1)*bpp+b.rmask();
+    auto lb = b.getBits().begin()+b.rmask();
+    auto rb = b.getBits().begin()+bpp+b.rmask();
+    auto ot = composed.begin();
+    for( uint32_t i = 0; i < h; ++i ){
+        for( uint32_t j = 0; j < w; ++j ){
+            *ot = composeBits({*lt, *rt, *rb, *lb});
+            //cout << to_string(*ot);
+            if(*ot != 0 && *ot != 15)
+                points[0].push_back(make_pair(j,i));
+            ++ot; lt+=bpp; rt+=bpp; lb+=bpp; rb+=bpp;
+            // As long as there is no padding this should be good
+        }
+        //cout << endl;
+        // If there is padding then we'll need to jump forward
+    }
+    //remove_if(composed.begin(),composed.end(), [](auto value){ return ( value == 0 || value == 15 );});
+
+    // Now that we have our composed vector we can construct our single set of points to
+    // complete the first step
+
+    return points;
+}
+
+
+void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness ){
+    for( uint32_t i = 0; i < thickness && x+i < o.width(); ++i){
+        for( uint32_t j = 0; j < thickness && y+j < o.height(); ++j ){
+            o.r(x+i,y+j) = color;
+            o.g(x+i,y+j) = color;
+        }
+    }
+    //o.g(x,y) = color;
+    //o.b(x,y) = color;
 }
 
 void binaryGray( Bitmap &o, const uint32_t isovalue){
@@ -631,6 +690,8 @@ void binaryGray( Bitmap &o, const uint32_t isovalue){
 }
 uint8_t composeBits( const vector<uint32_t> cell ){
     // cells are  flattened, going from top left to bottom left clockwise
+    // Walk around the cell from top left to bottom left, using bitwise OR and
+    // left-shift
     uint8_t value = 0;
     for(auto i: cell){
         value <<= 1;

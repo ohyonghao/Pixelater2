@@ -1,3 +1,5 @@
+#ifndef MY_BITMAP_H_
+#define MY_BITMAP_H_
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -144,7 +146,7 @@ public:
     inline bool     hasAlpha() const{ return dibs.cmpsn; }
 
     auto& getBits(){return bits;}
-
+    auto bpp(){ return Bpp; /*dibs.cDepth;*/}
     // This function sets the internal dimensions of the bitmap, and in doing so
     // it takes no regards for the image that was in it and should be considered
     // corrucpted.
@@ -209,3 +211,19 @@ void scaleDown(Bitmap& b);
 // Final Functions
 
 void binaryGray( Bitmap &, const uint32_t isovalue);
+/*!
+ * \brief findContours returns a vector of vectors of points, that is to say that
+ *        each vector is a set of points that should form a completed contour
+ * \param o
+ * \return vector of sets of points that create a completed contour shape
+ */
+vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o);
+
+uint8_t composeBits( const vector<uint32_t> cell );
+
+void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness = 10);
+//void draw(Bitmap&o, uint32_t color, pair<uint32_t,uint32_t> coord)
+//{draw(o, coord.first, coord.second, color );}
+
+void contours(Bitmap& b);
+#endif // MY_BITMAP_H_

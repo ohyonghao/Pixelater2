@@ -98,6 +98,9 @@ int main(int argc, char** argv)
         {
             binaryGray(image, ISOVALUE);
         }
+        if(flag == "-contour"){
+            contours(image);
+        }
 
         out.open(outfile, ios::binary);
         out << image;
