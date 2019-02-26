@@ -615,9 +615,8 @@ void contours(Bitmap&o){
 
     auto cont = findContours(b);
     for( auto& i: cont[0]){
-        draw( b, i.first, i.second, 200, 10);
+        draw( o, i.first, i.second, 200, 10);
     }
-    swap( o, move(b));
 }
 
 vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o)
@@ -677,10 +676,9 @@ void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness )
         for( uint32_t j = 0; j < thickness && y+j < o.height(); ++j ){
             o.r(x+i,y+j) = color;
             o.g(x+i,y+j) = color;
+            o.b(x+i,y+j) = 0;
         }
     }
-    //o.g(x,y) = color;
-    //o.b(x,y) = color;
 }
 
 void binaryGray( Bitmap &o, const uint32_t isovalue){
