@@ -146,7 +146,7 @@ public:
     inline bool     hasAlpha() const{ return dibs.cmpsn; }
 
     auto& getBits(){return bits;}
-    auto bpp(){ return Bpp; /*dibs.cDepth;*/}
+    auto bpp(){ return Bpp;}
     // This function sets the internal dimensions of the bitmap, and in doing so
     // it takes no regards for the image that was in it and should be considered
     // corrucpted.
@@ -184,15 +184,6 @@ class InvalidWidthException: public exception{
     }
 };
 
-
-uint8_t clip( uint8_t value )noexcept;
-int clipIndex( int lower, int upper, int index )noexcept;
-uint32_t matrixSum( const vector<uint32_t>& matrix )noexcept;
-uint32_t matrixAverage( const vector<uint32_t>& rhs )noexcept;
-
-// Performs a hadamard product on same sized vectors
-void hadamard( const vector<uint32_t>& mult, vector<uint32_t>& result );
-
 // Filter Functions
 void cellShade(Bitmap& b)noexcept;
 void grayscale(Bitmap& b);
@@ -217,7 +208,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
  * \param o
  * \return vector of sets of points that create a completed contour shape
  */
-vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o);
+vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o, uint32_t step);
 
 uint8_t composeBits( const vector<uint32_t> cell );
 
@@ -226,4 +217,5 @@ void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness 
 //{draw(o, coord.first, coord.second, color );}
 
 void contours(Bitmap& b);
+
 #endif // MY_BITMAP_H_

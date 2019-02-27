@@ -613,13 +613,13 @@ void contours(Bitmap&o){
     Bitmap b(o);
     binaryGray(b, ISOVALUE);
 
-    auto cont = findContours(b);
+    auto cont = findContours(b,5);
     for( auto& i: cont[0]){
-        draw( o, i.first, i.second, 200, 10);
+        draw( o, i.first, i.second, 200, 3);
     }
 }
 
-vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o)
+vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o, uint32_t step)
 {
     Bitmap b(o);
 
@@ -640,27 +640,35 @@ vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o)
     uint32_t h = static_cast<uint32_t>(b.height()*(b.height() < 0 ? -1:1));
 
     // Our vector to put things in
-    vector<uint8_t> composed(w*h, 0);
+    vector<uint8_t> composed(w*h/step, 0);
     // For now, our vector of points
 
     vector<vector<pair<uint32_t,uint32_t>>> points(1);
-    int bpp = b.bpp();
-    auto lt = b.getBits().begin()+w*bpp+b.rmask();
-    auto rt = b.getBits().begin()+(w+1)*bpp+b.rmask();
+    uint32_t bpp = b.bpp();
+    uint32_t steps = bpp*step;
     auto lb = b.getBits().begin()+b.rmask();
-    auto rb = b.getBits().begin()+bpp+b.rmask();
+    auto lt = lb+w*steps;
+    auto rt = lb+w*steps+steps;
+    auto rb = lb+steps;
     auto ot = composed.begin();
-    for( uint32_t i = 0; i < h; ++i ){
-        for( uint32_t j = 0; j < w; ++j ){
+    for( uint32_t i = 0; i < h; i+=step ){
+        for( uint32_t j = 0; j < w; j+=step ){
             *ot = composeBits({*lt, *rt, *rb, *lb});
             //cout << to_string(*ot);
-            if(*ot != 0 && *ot != 15)
+            if(*ot != 0 && *ot != 15){
                 points[0].push_back(make_pair(j,i));
-            ++ot; lt+=bpp; rt+=bpp; lb+=bpp; rb+=bpp;
+                cout << "(" << j << "," << i << ")";
+            }
+            // Increment our horde of iterators
+            ++ot; lt+=steps; rt+=steps; lb+=steps; rb+=steps;
             // As long as there is no padding this should be good
         }
-        //cout << endl;
-        // If there is padding then we'll need to jump forward
+        // each time we reach the end of a line we need to jump up steps*width, but also account
+        // for the step we already took
+        lt+=w*bpp*(step-1); rt+=w*bpp*(step-1); lb+=w*bpp*(step-1); rb+=w*bpp*(step-1);
+        cout << endl;
+        // If there is padding then we'll need to jump forward here
+        // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
     //remove_if(composed.begin(),composed.end(), [](auto value){ return ( value == 0 || value == 15 );});
 
@@ -672,6 +680,8 @@ vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o)
 
 
 void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness ){
+    // Need a good way to pull out the color, or split this, but for now we'll
+    // Leave this like this
     for( uint32_t i = 0; i < thickness && x+i < o.width(); ++i){
         for( uint32_t j = 0; j < thickness && y+j < o.height(); ++j ){
             o.r(x+i,y+j) = color;
