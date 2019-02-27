@@ -1,0 +1,405 @@
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <algorithm>
+#include <ctime>
+#include <cstdlib>
+#include <fstream>
+
+using namespace std;
+
+class point
+{
+	public:
+		int x, y;
+		point():x(0), y(0){}
+		point(int a, int b):x(a), y(b){}
+
+		point(const point & a):x(a.x), y(a.y){}
+		point & operator = (const point & a);
+		friend ostream & operator<< (ostream & out,  const point & p);
+		friend bool operator == (const point & a, const point & b);
+		friend bool operator != (const point & a, const point & b);
+
+};
+
+//assignment operator
+point & point::operator = (const point & a)
+{
+	if(this == &a)
+		return *this;
+	x = a.x;
+	y = a.y;
+	return *this;
+}
+
+ostream & operator<< (ostream & out, const point & p)
+{
+	out << "(" << p.x << ", " << p.y << ")";
+	out.flush();
+
+	return out;
+}
+
+bool operator == (const point & a, const point & b)
+{
+	if((a.x == b.x)&&(a.y == b.y))
+		return true;
+	else
+		return false;
+}
+bool operator != (const point & a, const point & b)
+{
+	if((a.x == b.x)&&(a.y == b.y))
+		return false;
+	else
+		return true;
+}
+
+
+//set a global point p0 for the comparator 
+point p0;
+
+//square distance between two points
+int distance(const point & p1, const point & p2)
+{
+	int val = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+	return val;
+}
+
+//check for CCW - counter clock wise
+bool counterClockWise(const point & p1, const point & p2, const point & p3)
+{
+	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
+	if(result < 0)
+		return true;
+	else
+		return false;
+}
+
+//check for colinear
+bool colinear(const point & p1, const point & p2, const point & p3)
+{
+	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
+	return result == 0;
+}
+
+//check for CW - clock wise
+bool ClockWise(const point & p1, const point & p2, const point & p3)
+{
+	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
+	if(result > 0)
+		return true;
+	else
+		return false;
+}
+
+/*
+//a comparator that will be used for sorting the points by polar angle around p0
+bool compare(const point & a, const point & b)
+{
+	if(colinear(p0, a, b))
+	{
+		return distance(p0, a) > distance(p0, b);
+	}
+	else
+	{
+		if(counterClockWise(p0, a, b))
+			return false;
+		else
+			return true;
+	}
+}
+*/
+//a comparator that will be used for sorting the points by polar angle around p0
+bool compare(const point & a, const point & b)
+{
+	if(colinear(p0, a, b))
+	{
+		return distance(p0, a) < distance(p0, b);
+	}
+	else
+	{
+		if(counterClockWise(p0, a, b))
+			return true;
+		else
+			return false;
+	}
+}
+
+//to compare the top 2 element of the stack S with point pi
+//we need a function to get the second top element from the stack
+point secondTopE(stack<point> & s)
+{
+	point p = s.top();
+	s.pop();
+
+	point secondTop = s.top();
+	s.push(p);
+
+	return secondTop;
+}
+
+//jarvis march algorithm
+vector<point> jarvisMarch(vector<point> & points)
+{
+	int n = points.size();
+	//if number of input <= 3 the input is a convex hull
+	if( n <= 3)
+	{
+		return points;
+	}
+	vector<point> convexHull;
+	
+	//starts with find the left most point
+	int leftMost = 0;
+	for(int i = 1; i < n; ++i)
+	{
+		if(points[i].x < points[leftMost].x)
+			leftMost = i;
+	}
+
+	//travel counterclockwise to find the rightmost point of a current point. 
+	int p = leftMost, q;
+ 	do
+	{
+		q = (p + 1) % n;
+		for(int i = 0; i < n; ++i)
+		{
+			if(counterClockWise(points[p], points[i], points[q]))
+				q = i;
+		}
+		convexHull.push_back(points[q]);
+		p = q;
+	}while(p != leftMost);
+
+	return convexHull;
+}
+
+//graham scan algorithm
+vector<point> grahamScan(vector<point> & points)
+{
+	int n = points.size();
+	vector<point> convexHull;
+
+	if(n <= 3)
+		return points;
+
+	//find the point which has the lowest y-coordinate
+	int min_y = points[0].y;
+	int Min = 0;
+	for(int i = 1; i < n; ++i)
+	{
+		int cur_y = points[i].y;
+		if(cur_y < min_y ||((min_y == cur_y) && (points[i].x < points[Min].x)))
+		{
+			Min = i;
+			min_y = points[i].y;
+		}
+	}
+
+	//switch p0 and pmin so p0 can have the lowest y-coordinate
+	swap(points[0], points[Min]);
+
+	//sort the points by polar angle around p0;
+	p0 = points[0];
+
+	sort(points.begin()+1, points.end(), compare);
+
+
+	int arrSize = 1;    //used to locate items in modified array
+   	for(int i = 1; i<n; i++) 
+	{
+
+      //when the angle of ith and (i+1)th elements are same, remove points
+      		while(i < n-1 && colinear(p0, points[i], points[i+1]))
+         		i++;
+      		points[arrSize] = points[i];
+      		arrSize++;
+   	}
+
+   	if(arrSize < 3)
+      		return convexHull;  	
+
+
+	stack<point> S;
+	S.push(points[0]);
+	S.push(points[1]);
+	S.push(points[2]);
+
+	for(int i = 3; i < arrSize; ++i)
+//	for(int i = 3; i < n; ++i)
+
+	{
+		while(counterClockWise(secondTopE(S), S.top(), points[i]) == false)
+		{
+			S.pop();
+		}
+		S.push(points[i]);
+	}
+	
+	//move the points in the stack to convexHull vector
+	while(!S.empty())
+	{
+		convexHull.push_back(S.top());
+		S.pop();
+	}
+		
+	return convexHull;
+}
+
+//function to generate randam points 
+vector<point> randomPoints(int n)
+{
+	vector<point> points(n);
+	int x, y;
+
+	//different values each time the program is run	
+	srand(time(NULL)); 
+	for(int i = 0; i < n; ++i)
+	{
+		x = rand() % 100;
+		y = rand() % 100;	
+
+		point p;
+		p.x = x;
+		p.y = y;
+
+		points[i] = p;
+	}
+	return points;
+}
+
+// a function to print the points
+void print(vector<point> & points)
+{
+	sort(points.begin(), points.end(), compare);
+
+	for(auto point:points)
+	{
+		cout << point << endl;
+	}
+
+	cout << "size = " << points.size() << endl;
+}
+
+void writexTXT(char file_name[], vector<point> & points)
+{
+	ofstream file_out;
+
+	file_out.open(file_name);
+
+	if(!file_out)
+		return;
+	if(file_out)
+	{
+		for(auto point:points)
+		{
+			file_out << point.x << "\n";
+		}
+	}
+	file_out.close();
+}
+void writeyTXT(char file_name[], vector<point> & points)
+{
+	ofstream file_out;
+
+	file_out.open(file_name);
+
+	if(!file_out)
+		return;
+	if(file_out)
+	{
+		for(auto point:points)
+		{
+			file_out << point.y << "\n";
+		}
+	}
+	file_out.close();
+}
+//construct input having all the points on the convex hull
+vector<point> pointsOnHull(int n)
+{
+	vector<point> result(n);
+	for(int i = 0; i < n; ++i)
+	{
+		result[i].x = i;
+		result[i].y = i*i;
+	}
+	return result;
+}
+int main()
+{
+	vector<point> points = {{-7,8},{-4,6},{2,6},{6,4},{8,6},{7,-2},{4,-6},{8,-7},{0,0},
+                     {3,-2},{6,-10},{0,-6},{-9,-5},{-8,-2},{-8,0},{-10,3},{-2,2},{-10,4}};
+	//	vector<point> points = { { 0, 3 }, { 1, 1 }, { 2, 2 }, { 4, 4 }, { 0, 0 }, { 1, 2 }, { 3, 1 }, { 3, 3 } };
+	vector<point> convexHull_j, convexHull_g;
+
+	convexHull_j = jarvisMarch(points);
+	convexHull_g = grahamScan(points);
+
+	/*
+	print(convexHull_j);
+	cout << endl << endl;
+	print(convexHull_g);
+
+	return 0;
+	*/
+	
+	//vector<point> rPoints(48);
+	//rPoints = randomPoints(48);
+	
+//	writexTXT("x.txt", rPoints);
+//	writeyTXT("y.txt", rPoints);
+//
+	vector<point> rPoints = pointsOnHull(2000);
+
+	//unique(rPoints.begin(), rPoints.end());
+/*
+	cout << "random points " << endl;
+	for(auto p:rPoints)
+	{
+		cout << p << endl;
+	}
+*/
+	cout << "size = " << rPoints.size() << endl;
+	
+	
+	//track the time for jarvis march
+	clock_t t1;
+	t1 = clock();
+
+	vector<point> convexHull_J= jarvisMarch(rPoints);
+
+	t1 = clock() - t1;
+
+	cout<<"\n\njarvis march took "<<t1<<" clicks "<<((float)t1)/CLOCKS_PER_SEC
+	<<" seconds"<<endl << endl;
+
+	//track the time for grahamScan
+	clock_t t2;
+	t2 = clock();
+
+	vector<point> convexHull_G = grahamScan(rPoints);
+
+	t2 = clock() - t2;
+
+	cout<<"graham scan took "<<t2<<" clicks "<<((float)t2)/CLOCKS_PER_SEC
+	<<" seconds"<<endl << endl;
+	
+//	writexTXT("hullx.txt", convexHull_G);
+//	writeyTXT("hully.txt", convexHull_G);
+
+
+//	print(convexHull_J);
+//	cout<<endl<<endl<<endl;
+//	print(convexHull_G);	
+
+	cout <<"size of jarvis is: " << convexHull_J.size() << " size of graham is: " << convexHull_G.size() << endl;
+
+	//vector<point> hull = pointsOnHull(10);
+	//print(hull);
+	return 0;
+}
+
+
