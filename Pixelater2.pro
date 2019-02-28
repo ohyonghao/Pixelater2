@@ -5,8 +5,11 @@ CONFIG -= qt
 
 SOURCES += \
         main.cpp \
-    bitmap.cpp
+    bitmap.cpp \
+    jarvisMarch.cpp
 
 HEADERS += \
     bitmap.h \
-    pixel.h
+    pixel.h \
+    point.h \
+    jarvisMarch.h

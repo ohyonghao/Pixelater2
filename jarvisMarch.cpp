@@ -5,23 +5,9 @@
 #include <ctime>
 #include <cstdlib>
 #include <fstream>
+#include "point.h"
 
 using namespace std;
-
-class point
-{
-	public:
-		int x, y;
-		point():x(0), y(0){}
-		point(int a, int b):x(a), y(b){}
-
-		point(const point & a):x(a.x), y(a.y){}
-		point & operator = (const point & a);
-		friend ostream & operator<< (ostream & out,  const point & p);
-		friend bool operator == (const point & a, const point & b);
-		friend bool operator != (const point & a, const point & b);
-
-};
 
 //assignment operator
 point & point::operator = (const point & a)
@@ -328,6 +314,7 @@ vector<point> pointsOnHull(int n)
 	}
 	return result;
 }
+/*
 int main()
 {
 	vector<point> points = {{-7,8},{-4,6},{2,6},{6,4},{8,6},{7,-2},{4,-6},{8,-7},{0,0},
@@ -338,13 +325,13 @@ int main()
 	convexHull_j = jarvisMarch(points);
 	convexHull_g = grahamScan(points);
 
-	/*
-	print(convexHull_j);
-	cout << endl << endl;
-	print(convexHull_g);
 
-	return 0;
-	*/
+//	print(convexHull_j);
+//	cout << endl << endl;
+//	print(convexHull_g);
+
+//	return 0;
+
 	
 	//vector<point> rPoints(48);
 	//rPoints = randomPoints(48);
@@ -355,13 +342,13 @@ int main()
 	vector<point> rPoints = pointsOnHull(2000);
 
 	//unique(rPoints.begin(), rPoints.end());
-/*
-	cout << "random points " << endl;
-	for(auto p:rPoints)
-	{
-		cout << p << endl;
-	}
-*/
+
+//	cout << "random points " << endl;
+//	for(auto p:rPoints)
+//	{
+//		cout << p << endl;
+//	}
+
 	cout << "size = " << rPoints.size() << endl;
 	
 	
@@ -403,3 +390,4 @@ int main()
 }
 
 
+*/

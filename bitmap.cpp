@@ -4,6 +4,8 @@
 #include <valarray>
 #include <iterator>
 #include <string>
+#include "point.h"
+#include "jarvisMarch.h"
 #include "bitmap.h"
 
 /*
@@ -616,11 +618,21 @@ void contours(Bitmap&o){
 
     auto cont = findContours(b,5);
     for( auto& i: cont[0]){
-        draw( o, i.first, i.second, 200, 3);
+        draw( o, i.x, i.y, 0xFFFF00, 3);
+    }
+
+    vector<vector<point>> hulls;
+    for( auto& i: cont ){
+        hulls.push_back(grahamScan(i));
+    }
+    for( auto& i: hulls){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0xFF00FF, 5);
+        }
     }
 }
 
-vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o, uint32_t step)
+vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
 {
     Bitmap b(o);
 
@@ -644,7 +656,7 @@ vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o, uint32_t s
     vector<uint8_t> composed(w*h/step, 0);
     // For now, our vector of points
 
-    vector<vector<pair<uint32_t,uint32_t>>> points(1);
+    vector<vector<point>> points(1);
     uint32_t bpp = b.bpp();
     uint32_t steps = bpp*step;
     auto lb = b.getBits().begin()+b.rmask();
@@ -657,7 +669,7 @@ vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o, uint32_t s
             *ot = composeBits({*lt, *rt, *rb, *lb});
             //cout << to_string(*ot);
             if(*ot != 0 && *ot != 15){
-                points[0].push_back(make_pair(j,i));
+                points[0].push_back(point(j,i));
                 cout << "(" << j << "," << i << ")";
             }
             // Increment our horde of iterators
@@ -687,9 +699,9 @@ void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness )
     // Leave this like this
     for( uint32_t i = 0; i < thickness && x+i < o.width(); ++i){
         for( uint32_t j = 0; j < thickness && y+j < o.height(); ++j ){
-            o.r(x+i,y+j) = color;
-            o.g(x+i,y+j) = color;
-            o.b(x+i,y+j) = 0;
+            o.r(x+i,y+j) = (color & 0xFF0000) >> 16;
+            o.g(x+i,y+j) = (color & 0x00FF00) >> 8;
+            o.b(x+i,y+j) = (color & 0x0000FF);
         }
     }
 }
