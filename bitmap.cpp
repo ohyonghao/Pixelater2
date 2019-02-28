@@ -314,6 +314,7 @@ void pixelate(Bitmap& b) {
     for( auto& v: matrix ){
         v.resize(16*16);
     }
+    // Use a marching algorithm instead of loops of loops
 
     for( int j = 0; j < b.height(); j += 16 ){
         for( int i = 0; i < b.width(); i += 16 ){
@@ -675,6 +676,8 @@ vector<vector<pair<uint32_t,uint32_t>>> findContours(const Bitmap& o, uint32_t s
     // Now that we have our composed vector we can construct our single set of points to
     // complete the first step
 
+    // Interpolation goes somewhere y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+    // The limiting case should be when our step = 1
     return points;
 }
 

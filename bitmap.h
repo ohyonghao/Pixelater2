@@ -20,7 +20,7 @@ Let's first make our pixel class
 
 using namespace std;
 
-const uint32_t ISOVALUE = 127;
+const uint32_t ISOVALUE = 57;
 class Bitmap
 {
 private:
