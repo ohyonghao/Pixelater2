@@ -621,13 +621,23 @@ void contours(Bitmap&o){
         draw( o, i.x, i.y, 0xFFFF00, 3);
     }
 
+    vector<vector<point>> jm;
+    for( auto& i: cont){
+        jm.push_back(jarvisMarch(i));
+    }
+    for( auto& i: jm){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0x00FF00, 6);
+        }
+    }
+
     vector<vector<point>> hulls;
     for( auto& i: cont ){
         hulls.push_back(grahamScan(i));
     }
     for( auto& i: hulls){
         for(auto& j: i){
-            draw( o, j.x, j.y, 0xFF00FF, 5);
+            draw( o, j.x, j.y, 0xFF00FF, 4);
         }
     }
 }
