@@ -617,17 +617,13 @@ void contours(Bitmap&o){
     binaryGray(b, ISOVALUE);
 
     auto cont = findContours(b,5);
-    for( auto& i: cont[0]){
-        draw( o, i.x, i.y, 0xFFFF00, 3);
-    }
-
     vector<vector<point>> jm;
     for( auto& i: cont){
         jm.push_back(jarvisMarch(i));
     }
     for( auto& i: jm){
         for(auto& j: i){
-            draw( o, j.x, j.y, 0x00FF00, 6);
+            draw( o, j.x, j.y, 0x00FF00, 8);
         }
     }
 
@@ -640,6 +636,14 @@ void contours(Bitmap&o){
             draw( o, j.x, j.y, 0xFF00FF, 4);
         }
     }
+
+
+    for( auto& i: cont){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0xFFFF00, 2);
+        }
+    }
+
 }
 
 vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
@@ -669,13 +673,20 @@ vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
     vector<vector<point>> points(1);
     uint32_t bpp = b.bpp();
     uint32_t steps = bpp*step;
-    auto lb = b.getBits().begin()+b.rmask();
+    uint32_t pad = step/2;
+
+    // The four corners march fourth on their horses towards the apocalypse
+    auto lb = b.getBits().begin()+w*pad+pad+b.rmask();
     auto lt = lb+w*steps;
     auto rt = lb+w*steps+steps;
     auto rb = lb+steps;
-    auto ot = composed.begin();
-    for( uint32_t i = 0; i < h; i+=step ){
-        for( uint32_t j = 0; j < w; j+=step ){
+
+    // Start out with our padding in place
+    auto ot = composed.begin()+w*pad+pad;
+    for( uint32_t i = pad; i < h-(step); i+=step )
+    {
+        for( uint32_t j = pad; j < w-(step); j+=step )
+        {
             *ot = composeBits({*lt, *rt, *rb, *lb});
             //cout << to_string(*ot);
             if(*ot != 0 && *ot != 15){
@@ -688,7 +699,9 @@ vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
         }
         // each time we reach the end of a line we need to jump up steps*width, but also account
         // for the step we already took
-        lt+=w*bpp*(step-1); rt+=w*bpp*(step-1); lb+=w*bpp*(step-1); rb+=w*bpp*(step-1);
+        uint32_t leap = w*bpp*(step+2*pad);
+        lt+=leap; rt+=leap; lb+=leap; rb+=leap;
+        ot+=step+2*pad;
         cout << endl;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
