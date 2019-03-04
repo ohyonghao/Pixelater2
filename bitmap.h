@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include <exception>
-#include "point.h"
+#include "point.hpp"
 /*
 Tasks to do:
 1. Create a Pixel class to hold the argb pixel information, this should be simple
@@ -207,7 +207,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
  * \param o
  * \return vector of sets of points that create a completed contour shape
  */
-vector<vector<point>> findContours(const Bitmap& o, uint32_t step);
+vector<vector<point<uint32_t>>> findContours(const Bitmap& o, uint32_t step);
 
 uint8_t composeBits( const vector<uint32_t> cell );
 

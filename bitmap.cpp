@@ -4,8 +4,8 @@
 #include <valarray>
 #include <iterator>
 #include <string>
-#include "point.h"
-#include "jarvisMarch.h"
+#include "point.hpp"
+#include "jarvisMarch.hpp"
 #include "bitmap.h"
 
 /*
@@ -617,7 +617,8 @@ void contours(Bitmap&o){
     binaryGray(b, ISOVALUE);
 
     auto cont = findContours(b,5);
-    vector<vector<point>> jm;
+
+    vector<vector<point<uint32_t>>> jm;
     for( auto& i: cont){
         jm.push_back(jarvisMarch(i));
     }
@@ -627,7 +628,7 @@ void contours(Bitmap&o){
         }
     }
 
-    vector<vector<point>> hulls;
+    vector<vector<point<uint32_t>>> hulls;
     for( auto& i: cont ){
         hulls.push_back(grahamScan(i));
     }
@@ -646,7 +647,7 @@ void contours(Bitmap&o){
 
 }
 
-vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
+vector<vector<point<uint32_t> > > findContours(const Bitmap& o, uint32_t step)
 {
     Bitmap b(o);
 
@@ -670,7 +671,7 @@ vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
     vector<uint8_t> composed(w*h/step, 0);
     // For now, our vector of points
 
-    vector<vector<point>> points(1);
+    vector<vector<point<uint32_t>>> points(1);
     const uint32_t bpp = b.bpp();
     const uint32_t steps = bpp*step;
     const uint32_t pad = step/2;
@@ -693,7 +694,6 @@ vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
             //cout << to_string(*ot);
             if(*ot != 0 && *ot != 15){
                 points[0].push_back(point(j,i));
-                cout << "(" << j << "," << i << ")";
             }
             // Increment our horde of iterators
             ++ot; lt+=steps; rt+=steps; lb+=steps; rb+=steps;
@@ -749,4 +749,92 @@ uint8_t composeBits( const vector<uint32_t> cell ){
     return value;
 }
 
+vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
+    vector<pair<point<uint32_t>,point<uint32_t>>> sides;
+    switch( square ){
+    /* ******************
+     * Bottom, Left
+     * +==+
+     * |  |
+     * -==+
+     *******************/
+    case 1:
+    case 14:
+        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,1))};
+        break;
 
+    /* ******************
+     *  Bottom, Right
+     * +==+
+     * |  |
+     * +==-
+     *******************/
+    case 2:
+    case 13:
+        sides = {make_pair(point<uint32_t>(0,0),point<uint32_t>(1,1))};
+        break;
+
+    /* ******************
+     * Left, Right
+     * +==+
+     * |  |
+     * -==-
+     *******************/
+    case 3:
+    case 12:
+        sides = {make_pair(point<uint32_t>(0,0),point<uint32_t>(0,1))};
+        break;
+
+    /* ******************
+     * Top, Right
+     * +==-
+     * |  |
+     * +==+
+     *******************/
+    case 4:
+    case 11:
+        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,1))};
+        break;
+
+    /* ******************
+     * {Top, Right}, {Bottom, Left}
+     * -==+
+     * |  |
+     * +==-
+     ********************/
+    case 5:
+    case 10:
+        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,1)), make_pair(point<uint32_t>(0,1),point<uint32_t>(1,0))};
+        break;
+
+    /* *******************
+     * {Top, Bottom}
+     * +==-
+     * |  |
+     * +==-
+     *********************/
+    case 6:
+        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,0))};
+        break;
+    case 9:
+        sides = {make_pair(point<uint32_t>(1,1),point<uint32_t>(0,1))};
+        break;
+
+    /* ********************
+     * {Top, Left}
+     * +==-
+     * |  |
+     * -==-
+     **********************/
+    case 7:
+    case 8:
+    /* **********************
+     * None
+     ***********************/
+    case 0:
+    case 15:
+    default:
+        break;
+    }
+    return sides;
+}

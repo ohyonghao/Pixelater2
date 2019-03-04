@@ -1,3 +1,6 @@
+#ifndef JARVISMARCH_H
+#define JARVISMARCH_H
+
 #include <iostream>
 #include <vector>
 #include <stack>
@@ -5,56 +8,24 @@
 #include <ctime>
 #include <cstdlib>
 #include <fstream>
-#include "point.h"
+#include "point.hpp"
 
-using namespace std;
-
-//assignment operator
-point & point::operator = (const point & a)
-{
-	if(this == &a)
-		return *this;
-	x = a.x;
-	y = a.y;
-	return *this;
-}
-
-ostream & operator<< (ostream & out, const point & p)
-{
-	out << "(" << p.x << ", " << p.y << ")";
-	out.flush();
-
-	return out;
-}
-
-bool operator == (const point & a, const point & b)
-{
-	if((a.x == b.x)&&(a.y == b.y))
-		return true;
-	else
-		return false;
-}
-bool operator != (const point & a, const point & b)
-{
-	if((a.x == b.x)&&(a.y == b.y))
-		return false;
-	else
-		return true;
-}
-
-
-//set a global point p0 for the comparator 
-point p0;
+template<typename T>
+std::vector<point<T>> jarvisMarch(std::vector<point<T>>&);
+template<typename T>
+std::vector<point<T>> grahamScan(std::vector<point<T>>&);
 
 //square distance between two points
-int distance(const point & p1, const point & p2)
+template<typename T>
+int distance(const point<T> & p1, const point<T> & p2)
 {
 	int val = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
 	return val;
 }
 
+template<typename T>
 //check for CCW - counter clock wise
-bool counterClockWise(const point & p1, const point & p2, const point & p3)
+bool counterClockWise(const point<T> & p1, const point<T> & p2, const point<T> & p3)
 {
 	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
 	if(result < 0)
@@ -64,14 +35,16 @@ bool counterClockWise(const point & p1, const point & p2, const point & p3)
 }
 
 //check for colinear
-bool colinear(const point & p1, const point & p2, const point & p3)
+template<typename T>
+bool colinear(const point<T> & p1, const point<T> & p2, const point<T> & p3)
 {
 	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
 	return result == 0;
 }
 
 //check for CW - clock wise
-bool ClockWise(const point & p1, const point & p2, const point & p3)
+template<typename T>
+bool ClockWise(const point<T> & p1, const point<T> & p2, const point<T> & p3)
 {
 	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
 	if(result > 0)
@@ -97,25 +70,12 @@ bool compare(const point & a, const point & b)
 	}
 }
 */
-//a comparator that will be used for sorting the points by polar angle around p0
-bool compare(const point & a, const point & b)
-{
-	if(colinear(p0, a, b))
-	{
-		return distance(p0, a) < distance(p0, b);
-	}
-	else
-	{
-		if(counterClockWise(p0, a, b))
-			return true;
-		else
-			return false;
-	}
-}
 
 //to compare the top 2 element of the stack S with point pi
 //we need a function to get the second top element from the stack
-point secondTopE(stack<point> & s)
+
+template<typename T>
+point<T> secondTopE(std::stack<point<T>> & s)
 {
 	point p = s.top();
 	s.pop();
@@ -127,7 +87,8 @@ point secondTopE(stack<point> & s)
 }
 
 //jarvis march algorithm
-vector<point> jarvisMarch(vector<point> & points)
+template<typename T>
+std::vector<point<T>> jarvisMarch(std::vector<point<T>> & points)
 {
 	int n = points.size();
 	//if number of input <= 3 the input is a convex hull
@@ -135,7 +96,7 @@ vector<point> jarvisMarch(vector<point> & points)
 	{
 		return points;
 	}
-	vector<point> convexHull;
+    std::vector<point<T>> convexHull;
 	
 	//starts with find the left most point
 	int leftMost = 0;
@@ -162,11 +123,18 @@ vector<point> jarvisMarch(vector<point> & points)
 	return convexHull;
 }
 
+template<typename T>
+void swap(point<T> lhs, point<T> rhs ){
+    point<T> temp = rhs;
+    rhs = lhs;
+    lhs = temp;
+}
 //graham scan algorithm
-vector<point> grahamScan(vector<point> & points)
+template<typename T>
+std::vector<point<T>> grahamScan(std::vector<point<T>> & points)
 {
 	int n = points.size();
-	vector<point> convexHull;
+    std::vector<point<T>> convexHull;
 
 	if(n <= 3)
 		return points;
@@ -188,9 +156,10 @@ vector<point> grahamScan(vector<point> & points)
 	swap(points[0], points[Min]);
 
 	//sort the points by polar angle around p0;
-	p0 = points[0];
+    // Make a compare class here and set the point
+    Compare compare(points[0]);
 
-	sort(points.begin()+1, points.end(), compare);
+    sort(points.begin()+1, points.end(), compare);
 
 
 	int arrSize = 1;    //used to locate items in modified array
@@ -198,7 +167,7 @@ vector<point> grahamScan(vector<point> & points)
 	{
 
       //when the angle of ith and (i+1)th elements are same, remove points
-      		while(i < n-1 && colinear(p0, points[i], points[i+1]))
+            while(i < n-1 && colinear(compare.p0(), points[i], points[i+1]))
          		i++;
       		points[arrSize] = points[i];
       		arrSize++;
@@ -208,7 +177,7 @@ vector<point> grahamScan(vector<point> & points)
       		return convexHull;  	
 
 
-	stack<point> S;
+    std::stack<point<T>> S;
 	S.push(points[0]);
 	S.push(points[1]);
 	S.push(points[2]);
@@ -235,9 +204,10 @@ vector<point> grahamScan(vector<point> & points)
 }
 
 //function to generate randam points 
-vector<point> randomPoints(int n)
+template<typename T>
+std::vector<point<T>> randomPoints(int n)
 {
-	vector<point> points(n);
+    std::vector<point<T>> points(n);
 	int x, y;
 
 	//different values each time the program is run	
@@ -247,7 +217,7 @@ vector<point> randomPoints(int n)
 		x = rand() % 100;
 		y = rand() % 100;	
 
-		point p;
+        point<T> p;
 		p.x = x;
 		p.y = y;
 
@@ -257,21 +227,24 @@ vector<point> randomPoints(int n)
 }
 
 // a function to print the points
-void print(vector<point> & points)
+template<typename T>
+void print(std::vector<point<T>> & points)
 {
+    Compare compare(points[0]);
 	sort(points.begin(), points.end(), compare);
 
 	for(auto point:points)
 	{
-		cout << point << endl;
+        std::cout << point << std::endl;
 	}
 
-	cout << "size = " << points.size() << endl;
+    std::cout << "size = " << points.size() << std::endl;
 }
 
-void writexTXT(char file_name[], vector<point> & points)
+template<typename T>
+void writexTXT(char file_name[], std::vector<point<T>> & points)
 {
-	ofstream file_out;
+    std::ofstream file_out;
 
 	file_out.open(file_name);
 
@@ -286,9 +259,10 @@ void writexTXT(char file_name[], vector<point> & points)
 	}
 	file_out.close();
 }
-void writeyTXT(char file_name[], vector<point> & points)
+template<typename T>
+void writeyTXT(char file_name[], std::vector<point<T>> & points)
 {
-	ofstream file_out;
+    std::ofstream file_out;
 
 	file_out.open(file_name);
 
@@ -304,9 +278,10 @@ void writeyTXT(char file_name[], vector<point> & points)
 	file_out.close();
 }
 //construct input having all the points on the convex hull
-vector<point> pointsOnHull(int n)
+template<typename T>
+std::vector<point<T>> pointsOnHull(int n)
 {
-	vector<point> result(n);
+    std::vector<point<T>> result(n);
 	for(int i = 0; i < n; ++i)
 	{
 		result[i].x = i;
@@ -317,10 +292,10 @@ vector<point> pointsOnHull(int n)
 /*
 int main()
 {
-	vector<point> points = {{-7,8},{-4,6},{2,6},{6,4},{8,6},{7,-2},{4,-6},{8,-7},{0,0},
+    std::vector<point> points = {{-7,8},{-4,6},{2,6},{6,4},{8,6},{7,-2},{4,-6},{8,-7},{0,0},
                      {3,-2},{6,-10},{0,-6},{-9,-5},{-8,-2},{-8,0},{-10,3},{-2,2},{-10,4}};
-	//	vector<point> points = { { 0, 3 }, { 1, 1 }, { 2, 2 }, { 4, 4 }, { 0, 0 }, { 1, 2 }, { 3, 1 }, { 3, 3 } };
-	vector<point> convexHull_j, convexHull_g;
+    //	std::vector<point> points = { { 0, 3 }, { 1, 1 }, { 2, 2 }, { 4, 4 }, { 0, 0 }, { 1, 2 }, { 3, 1 }, { 3, 3 } };
+    std::vector<point> convexHull_j, convexHull_g;
 
 	convexHull_j = jarvisMarch(points);
 	convexHull_g = grahamScan(points);
@@ -333,13 +308,13 @@ int main()
 //	return 0;
 
 	
-	//vector<point> rPoints(48);
+    //std::vector<point> rPoints(48);
 	//rPoints = randomPoints(48);
 	
 //	writexTXT("x.txt", rPoints);
 //	writeyTXT("y.txt", rPoints);
 //
-	vector<point> rPoints = pointsOnHull(2000);
+    std::vector<point> rPoints = pointsOnHull(2000);
 
 	//unique(rPoints.begin(), rPoints.end());
 
@@ -356,7 +331,7 @@ int main()
 	clock_t t1;
 	t1 = clock();
 
-	vector<point> convexHull_J= jarvisMarch(rPoints);
+    std::vector<point> convexHull_J= jarvisMarch(rPoints);
 
 	t1 = clock() - t1;
 
@@ -367,7 +342,7 @@ int main()
 	clock_t t2;
 	t2 = clock();
 
-	vector<point> convexHull_G = grahamScan(rPoints);
+    std::vector<point> convexHull_G = grahamScan(rPoints);
 
 	t2 = clock() - t2;
 
@@ -384,10 +359,11 @@ int main()
 
 	cout <<"size of jarvis is: " << convexHull_J.size() << " size of graham is: " << convexHull_G.size() << endl;
 
-	//vector<point> hull = pointsOnHull(10);
+    //std::vector<point> hull = pointsOnHull(10);
 	//print(hull);
 	return 0;
 }
 
 
 */
+#endif // JARVISMARCH_HPP
