@@ -671,21 +671,23 @@ vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
     // For now, our vector of points
 
     vector<vector<point>> points(1);
-    uint32_t bpp = b.bpp();
-    uint32_t steps = bpp*step;
-    uint32_t pad = step/2;
+    const uint32_t bpp = b.bpp();
+    const uint32_t steps = bpp*step;
+    const uint32_t pad = step/2;
 
     // The four corners march fourth on their horses towards the apocalypse
-    auto lb = b.getBits().begin()+w*pad+pad+b.rmask();
+    auto lb = b.getBits().begin()+bpp*(w*pad+pad)+b.rmask();
     auto lt = lb+w*steps;
     auto rt = lb+w*steps+steps;
     auto rb = lb+steps;
 
     // Start out with our padding in place
+    // We may need to rethink this to make sure that edge detection
+    // works for items that go up to the edge of the image.
     auto ot = composed.begin()+w*pad+pad;
-    for( uint32_t i = pad; i < h-(step); i+=step )
+    for( uint32_t i = pad; i < h-(step+pad); i+=step )
     {
-        for( uint32_t j = pad; j < w-(step); j+=step )
+        for( uint32_t j = pad; j < w-(step+pad); j+=step )
         {
             *ot = composeBits({*lt, *rt, *rb, *lb});
             //cout << to_string(*ot);
@@ -699,9 +701,10 @@ vector<vector<point> > findContours(const Bitmap& o, uint32_t step)
         }
         // each time we reach the end of a line we need to jump up steps*width, but also account
         // for the step we already took
-        uint32_t leap = w*bpp*(step+2*pad);
+        // We are taking the height in steps
+        uint32_t leap = bpp*(w*(step-1)+2*pad+1);
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
-        ot+=step+2*pad;
+        ot+=pad;
         cout << endl;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
