@@ -19,6 +19,7 @@ Let's first make our pixel class
 
 using namespace std;
 
+typedef point<uint32_t> pt;
 const uint32_t ISOVALUE = 57;
 class Bitmap
 {
@@ -110,7 +111,7 @@ private:
     
     uint32_t rowSize = 0;   // Row Size in Bytes
     uint32_t rowWidth = 0;  // Row Width in Pixels including padding
-    int      Bpp     = 0;   // Bytes per pixel
+    uint32_t  Bpp     = 0;   // Bytes per pixel
 
     // Uses info in colorspace to init masks
     void setmask( );
@@ -207,7 +208,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
  * \param o
  * \return vector of sets of points that create a completed contour shape
  */
-vector<vector<point<uint32_t>>> findContours(const Bitmap& o, uint32_t step);
+vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
 
 uint8_t composeBits( const vector<uint32_t> cell );
 

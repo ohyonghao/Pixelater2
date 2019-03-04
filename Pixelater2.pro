@@ -10,6 +10,5 @@ SOURCES += \
 HEADERS += \
     bitmap.h \
     pixel.h \
-    jarvisMarch.h \
     point.hpp \
     jarvisMarch.hpp

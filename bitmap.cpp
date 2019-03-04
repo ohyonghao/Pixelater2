@@ -618,7 +618,7 @@ void contours(Bitmap&o){
 
     auto cont = findContours(b,5);
 
-    vector<vector<point<uint32_t>>> jm;
+    vector<vector<pt>> jm;
     for( auto& i: cont){
         jm.push_back(jarvisMarch(i));
     }
@@ -628,7 +628,7 @@ void contours(Bitmap&o){
         }
     }
 
-    vector<vector<point<uint32_t>>> hulls;
+    vector<vector<pt>> hulls;
     for( auto& i: cont ){
         hulls.push_back(grahamScan(i));
     }
@@ -647,7 +647,7 @@ void contours(Bitmap&o){
 
 }
 
-vector<vector<point<uint32_t> > > findContours(const Bitmap& o, uint32_t step)
+vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 {
     Bitmap b(o);
 
@@ -671,7 +671,7 @@ vector<vector<point<uint32_t> > > findContours(const Bitmap& o, uint32_t step)
     vector<uint8_t> composed(w*h/step, 0);
     // For now, our vector of points
 
-    vector<vector<point<uint32_t>>> points(1);
+    vector<vector<pt>> points(1);
     const uint32_t bpp = b.bpp();
     const uint32_t steps = bpp*step;
     const uint32_t pad = step/2;
@@ -693,7 +693,7 @@ vector<vector<point<uint32_t> > > findContours(const Bitmap& o, uint32_t step)
             *ot = composeBits({*lt, *rt, *rb, *lb});
             //cout << to_string(*ot);
             if(*ot != 0 && *ot != 15){
-                points[0].push_back(point(j,i));
+                points[0].push_back(pt(j,i));
             }
             // Increment our horde of iterators
             ++ot; lt+=steps; rt+=steps; lb+=steps; rb+=steps;
@@ -749,8 +749,8 @@ uint8_t composeBits( const vector<uint32_t> cell ){
     return value;
 }
 
-vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
-    vector<pair<point<uint32_t>,point<uint32_t>>> sides;
+vector<pair<pt,pt>> edges( uint8_t square ){
+    vector<pair<pt,pt>> sides;
     switch( square ){
     /* ******************
      * Bottom, Left
@@ -760,7 +760,7 @@ vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
      *******************/
     case 1:
     case 14:
-        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,1))};
+        sides = {make_pair(pt(1,0),pt(0,1))};
         break;
 
     /* ******************
@@ -771,7 +771,7 @@ vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
      *******************/
     case 2:
     case 13:
-        sides = {make_pair(point<uint32_t>(0,0),point<uint32_t>(1,1))};
+        sides = {make_pair(pt(0,0),pt(1,1))};
         break;
 
     /* ******************
@@ -782,7 +782,7 @@ vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
      *******************/
     case 3:
     case 12:
-        sides = {make_pair(point<uint32_t>(0,0),point<uint32_t>(0,1))};
+        sides = {make_pair(pt(0,0),pt(0,1))};
         break;
 
     /* ******************
@@ -793,7 +793,7 @@ vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
      *******************/
     case 4:
     case 11:
-        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,1))};
+        sides = {make_pair(pt(1,0),pt(0,1))};
         break;
 
     /* ******************
@@ -804,7 +804,7 @@ vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
      ********************/
     case 5:
     case 10:
-        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,1)), make_pair(point<uint32_t>(0,1),point<uint32_t>(1,0))};
+        sides = {make_pair(pt(1,0),pt(0,1)), make_pair(pt(0,1),pt(1,0))};
         break;
 
     /* *******************
@@ -814,10 +814,10 @@ vector<pair<point<uint32_t>,point<uint32_t>>> edges( uint8_t square ){
      * +==-
      *********************/
     case 6:
-        sides = {make_pair(point<uint32_t>(1,0),point<uint32_t>(0,0))};
+        sides = {make_pair(pt(1,0),pt(0,0))};
         break;
     case 9:
-        sides = {make_pair(point<uint32_t>(1,1),point<uint32_t>(0,1))};
+        sides = {make_pair(pt(1,1),pt(0,1))};
         break;
 
     /* ********************
