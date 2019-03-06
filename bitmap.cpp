@@ -640,10 +640,12 @@ void contours(Bitmap&o){
     }
 
 
+    uint32_t color = 0xFF0000;
     for( auto& i: cont){
         for(auto& j: i){
-            draw( o, j.x, j.y, 0xFFFF00, 2);
+            draw( o, j.x, j.y, color, 2);
         }
+        color += 0x000012;
     }
 
 }
@@ -670,9 +672,11 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
     // Our vector to put things in
     vector<uint8_t> composed(w*h/step, 0);
-    // For now, our vector of points
 
+    // For now, our map of points
     map<pt,pair<edge,edge>,PointEquality<uint32_t>> points;
+
+    // Some information for moving iterators
     const uint32_t bpp = b.bpp();
     const uint32_t steps = bpp*step;
     const uint32_t pad = step/2;
@@ -707,19 +711,19 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                 // map edges into square space from unit square space
                 // v.first == v, v.second == v'
                 // We'll want Points to be a map from j,i -> edge pairs
+
+                // make_edge gurantees vertexs are ordered
                 points.insert(make_pair(pt(j,i),make_pair(
-                                     edge(
+                                     make_edge<point_t>(
                                            pt(j,i)+(v.first.first)*step,
                                            pt(j,i)+(v.first.second)*step
                                           ),
-                                     edge(
+                                     make_edge<point_t>(
                                             pt(j,i)+(v.second.first)*step,
                                             pt(j,i)+(v.second.second)*step
                                            )
                                      ))
                                  );
-                cout << pt(j,i)+(v.first.first)*step << pt(j,i)+(v.first.second)*step << ", "
-                     << pt(j,i)+(v.second.first)*step << pt(j,i)+(v.second.second)*step << endl;
                 // in here we want to add our edges to S (the set of all edges)
                 // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
             }
@@ -800,8 +804,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // The limiting case should be when our step = 1
     return polygons;
 }
-
-
 
 fpt interlopation(){
     return fpt(0,0);

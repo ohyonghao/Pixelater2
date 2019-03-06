@@ -1,6 +1,7 @@
 #ifndef POINT_HPP
 #define POINT_HPP
 #include <iostream>
+#include <utility>
 
 template<typename T>
 class point
@@ -104,4 +105,19 @@ public:
         return ( lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y)  );
     }
 };
+
+
+typedef point<uint32_t> pt;
+typedef std::pair<pt,pt> edge;
+
+template<typename T>
+edge make_edge( point<T>&& lhs, point<T>&& rhs ){
+    if( PointEquality<T>()(lhs, rhs) ){
+        return edge(lhs,rhs);
+    }
+    else{
+        return edge(rhs,lhs);
+    }
+}
+
 #endif // POINT_HPP

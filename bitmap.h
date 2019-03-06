@@ -19,7 +19,8 @@ Let's first make our pixel class
 
 using namespace std;
 
-typedef point<uint32_t> pt;
+typedef uint32_t point_t;
+typedef point<point_t> pt;
 typedef point<double> fpt;
 typedef pair<pt,pt> edge;
 
