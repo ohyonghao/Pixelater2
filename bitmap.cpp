@@ -645,7 +645,7 @@ void contours(Bitmap&o){
         for(auto& j: i){
             draw( o, j.x, j.y, color, 2);
         }
-        color += 0x000012;
+        color += 0x001133;
     }
 
 }
@@ -749,8 +749,31 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // Idea here, go through each edge pair finding the one that connects, trace out the
     // shape and remove these items from the vector and restart the process
 
+    // Interpolation, should be a fun use of transform :-D
+
+
+    map<pt,pair<pt,pt>,PointEquality<uint32_t>> interpolated_points;
+
+    for(auto i: points){
+       // auto alpha = b.r(i.second.first.first); // sp
+
+        pt e1 = interpolation(i.second.first.first, i.second.first.second, b.r(i.second.first.first) );
+        pt e2 = interpolation(i.second.second.first, i.second.second.second, b.r(i.second.second.first) );
+
+        interpolated_points[i.first] = make_pair( e1, e2 );
+    }
+
+//    transform( points.begin(), points.end(), interpolated_points.begin(), [&b](auto value){
+//        auto alpha = b.r(value.second.first.first); // sp
+
+//        pt e1 = interpolation(value.second.first.first, value.second.first.second, alpha );
+//        pt e2 = interpolation(value.second.second.first, value.second.second.second, alpha );
+
+//        return make_pair( pt(value.first), make_pair( move(e1), move(e2) ));
+//    } );
+
     vector<vector<pt>> polygons;
-    while(!points.empty())
+    while(!interpolated_points.empty())
     {
         vector<pt> poly = {};
         // Put the first point onto our vector
@@ -770,29 +793,29 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         // Get the first element by iterator since this is a map, not really anything to
         // Say this is the first
         // For a map it->first == key, it->second == value
-        auto it = points.begin();
+        auto it = interpolated_points.begin();
         pt first_pt = it->first;
         poly.push_back(first_pt);
-        edge last_edge = it->second.second;
-        edge current_edge = it->second.first;
+        pt last_pt = it->second.second;
+        pt current_pt = it->second.first;
 
         // Remove point
-        points.erase(it);
+        interpolated_points.erase(it);
 
         // Then find the next
         bool connected = false;
         while( !connected ){
-            auto found = find_if( points.begin(), points.end(), [&current_edge](auto value){
+            auto found = find_if( interpolated_points.begin(), interpolated_points.end(), [&current_pt](auto value){
                 // Check both edges
-                return (value.second.first == current_edge || value.second.second == current_edge);
+                return (value.second.first == current_pt || value.second.second == current_pt);
             } );
-            if(found == points.end()){
+            if(found == interpolated_points.end()){
                 break;
             }
             poly.push_back(found->first);
-            current_edge = ( current_edge == found->second.first ) ? found->second.second : found->second.first;
-            points.erase(found);
-            if( current_edge == last_edge ){
+            current_pt = ( current_pt == found->second.first ) ? found->second.second : found->second.first;
+            interpolated_points.erase(found);
+            if( current_pt == last_pt ){
                 connected = true;
             }
         }
@@ -801,12 +824,17 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     }
     // Interpolation goes somewhere y0 + (y1 - y0) * (x - x0) / (x1 - x0);
     // This is called as lerp( Sample1(corner value), Sample2(corner value), 0, 1, (isovalue))
+
+    // The interpolation points to a unique place along the edge that it intersects and is
+    // needed to actually do the union.
     // The limiting case should be when our step = 1
     return polygons;
 }
 
-fpt interlopation(){
-    return fpt(0,0);
+pt interpolation( pt p, pt q, point_t sp /*, point_t sq, point_t sigma*/){
+    point_t alpha = sp;
+
+    return pt( (1-alpha)*p.x + alpha*q.x, (1-alpha)*p.y + alpha*q.y );
 }
 
 void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness ){

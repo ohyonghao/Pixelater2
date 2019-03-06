@@ -138,6 +138,11 @@ public:
     inline uint8_t& g( int x, int y ){ return getPixel( x, y, g_mask ); }
     inline uint8_t& b( int x, int y ){ return getPixel( x, y, b_mask ); }
     inline uint8_t& a( int x, int y ){ return getPixel( x, y, a_mask ); }
+
+    inline uint8_t& r( pt& p ){ return getPixel( p.x, p.y, r_mask ); }
+    inline uint8_t& g( pt& p ){ return getPixel( p.x, p.y, g_mask ); }
+    inline uint8_t& b( pt& p ){ return getPixel( p.x, p.y, b_mask ); }
+    inline uint8_t& a( pt& p ){ return getPixel( p.x, p.y, a_mask ); }
     
     inline int32_t  height() const{ return dibs.height < 0 ? -dibs.height: dibs.height ; }
     inline int32_t  width() const{ return dibs.width; }
@@ -215,6 +220,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
 vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
 vector<pair<edge,edge>> edges( uint8_t square );
 uint8_t composeBits( const vector<uint32_t> cell );
+pt interpolation( pt p, pt q, point_t sp );
 
 void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness = 10);
 //void draw(Bitmap&o, uint32_t color, pair<uint32_t,uint32_t> coord)
