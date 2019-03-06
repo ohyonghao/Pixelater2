@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <exception>
+#include <cmath>
 #include "point.hpp"
 /*
 Tasks to do:
@@ -19,10 +20,7 @@ Let's first make our pixel class
 
 using namespace std;
 
-typedef uint32_t point_t;
-typedef point<point_t> pt;
-typedef point<double> fpt;
-typedef pair<pt,pt> edge;
+//typedef point<double> fpt;
 
 const uint32_t ISOVALUE = 57;
 class Bitmap
@@ -124,7 +122,8 @@ private:
     uint32_t maskToInt( uint32_t )noexcept;
 
     // Returns single pixel/color
-    uint8_t& getPixel( int x, int y, uint32_t mask );
+    inline uint8_t& getPixel( int x, int y, uint32_t mask );
+    inline const uint8_t& getPixel( int x, int y, uint32_t mask )const;
 
     vector<unsigned char>  bits;
 public:
@@ -143,7 +142,12 @@ public:
     inline uint8_t& g( pt& p ){ return getPixel( p.x, p.y, g_mask ); }
     inline uint8_t& b( pt& p ){ return getPixel( p.x, p.y, b_mask ); }
     inline uint8_t& a( pt& p ){ return getPixel( p.x, p.y, a_mask ); }
-    
+
+    const uint8_t& r( pt& p )const{ return getPixel( p.x, p.y, r_mask ); }
+    const uint8_t& g( pt& p )const{ return getPixel( p.x, p.y, g_mask ); }
+    const uint8_t& b( pt& p )const{ return getPixel( p.x, p.y, b_mask ); }
+    const uint8_t& a( pt& p )const{ return getPixel( p.x, p.y, a_mask ); }
+
     inline int32_t  height() const{ return dibs.height < 0 ? -dibs.height: dibs.height ; }
     inline int32_t  width() const{ return dibs.width; }
     inline void     setHeight( int32_t height ){ setDimension( dibs.width, height); }
@@ -155,6 +159,7 @@ public:
     inline bool     hasAlpha() const{ return dibs.cmpsn; }
 
     auto& getBits(){return bits;}
+    const auto& getBits()const{return bits;}
     auto bpp(){ return Bpp;}
     // This function sets the internal dimensions of the bitmap, and in doing so
     // it takes no regards for the image that was in it and should be considered
@@ -220,7 +225,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
 vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
 vector<pair<edge,edge>> edges( uint8_t square );
 uint8_t composeBits( const vector<uint32_t> cell );
-fpt interpolation( pt p, pt q, point_t sp );
+pt interpolation(pt p, pt q, point_t sp , point_t sq, point_t sigma);
 
 void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness = 10);
 //void draw(Bitmap&o, uint32_t color, pair<uint32_t,uint32_t> coord)

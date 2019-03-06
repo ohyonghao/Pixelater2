@@ -174,13 +174,16 @@ uint32_t Bitmap::maskToInt( uint32_t mask ) noexcept{
  * Does not check bounds!
  */
 uint8_t& Bitmap::getPixel( int x, int y, uint32_t mask ){
+    return const_cast<uint8_t&>(static_cast<const Bitmap&>(*this).getPixel(x,y,mask));
+}
+
+const uint8_t& Bitmap::getPixel(int x, int y, uint32_t mask) const{
     if( x > dibs.width || y > ( dibs.height < 0 ? -dibs.height : dibs.height ) )
         throw OutOfBoundsException();
     if( dibs.height < 0 )
         y = (-dibs.height) - y;
     return bits[ y*rowSize + (x*Bpp) + mask ];
 }
-
 /*
  * Takes a value and returns either the low or high depending on whether it is above the threshold or not [0x00,0x54)
  */
@@ -615,30 +618,30 @@ void scaleDown(Bitmap& o ) {
 // Here's what drives our function
 void contours(Bitmap&o){
     Bitmap b(o);
-    binaryGray(b, ISOVALUE);
+    grayscale(b);
     binaryGray(o, ISOVALUE);
     auto cont = findContours(b,5);
 
-//    vector<vector<pt>> jm;
-//    for( auto& i: cont){
-//        jm.push_back(jarvisMarch(i));
-//    }
-//    for( auto& i: jm){
-//        for(auto& j: i){
-//            draw( o, j.x, j.y, 0x00FF00, 8);
-//        }
-//    }
-
-    vector<vector<pt>> hulls;
-    for( auto& i: cont ){
-        if(i.size() > 2 )
-        hulls.push_back(grahamScan(i));
+    vector<vector<pt>> jm;
+    for( auto& i: cont){
+        jm.push_back(jarvisMarch(i));
     }
-    for( auto& i: hulls){
+    for( auto& i: jm){
         for(auto& j: i){
-            draw( o, j.x, j.y, 0xFF00FF, 4);
+            draw( o, j.x, j.y, 0x00FF00, 8);
         }
     }
+
+//    vector<vector<pt>> hulls;
+//    for( auto& i: cont ){
+//        if(i.size() > 3 )
+//        hulls.push_back(grahamScan(i));
+//    }
+//    for( auto& i: hulls){
+//        for(auto& j: i){
+//            draw( o, j.x, j.y, 0xFF00FF, 4);
+//        }
+//    }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -649,13 +652,12 @@ void contours(Bitmap&o){
         }
         color += 0x001123;
     }
-    cout << count << endl;
 }
 
 vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 {
     Bitmap b(o);
-
+    binaryGray(b, ISOVALUE);
     // Make it a binary by using a threshold and transforming the entire thing
 
     // b = binary(b);
@@ -664,24 +666,24 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
     // The grids are independent of other grids
     //binaryGray( b, ISOVALUE);
-    transform( b.getBits().begin(), b.getBits().end(), b.getBits().begin(),
-        [](auto value){ return value == 255; } );
+    transform( o.getBits().begin(), o.getBits().end(), b.getBits().begin(),
+        [](auto value){ return value != 255; } );
 
     // For each bit we'll want to compose it into a new vector
-    uint32_t w = static_cast<uint32_t>(b.width());
+    int32_t w = b.width();
     // ensure against negative height
-    uint32_t h = static_cast<uint32_t>(b.height()*(b.height() < 0 ? -1:1));
+    int32_t h = b.height()*(b.height() < 0 ? -1:1);
 
     // Our vector to put things in
     vector<uint8_t> composed(w*h/step, 0);
 
     // For now, our map of points
-    map<pt,pair<edge,edge>,PointEquality<uint32_t>> points;
+    map<pt,pair<edge,edge>,PointEquality<point_t>> points;
 
     // Some information for moving iterators
-    const uint32_t bpp = b.bpp();
-    const uint32_t steps = bpp*step;
-    const uint32_t pad = step/2;
+    const int32_t bpp = b.bpp();
+    const int32_t steps = bpp*step;
+    const int32_t pad = 2;
 
     // The four corners march fourth on their horses towards the apocalypse
     auto lb = b.getBits().begin()+bpp*(w*pad+pad)+b.rmask();
@@ -726,6 +728,14 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                                            )
                                      ))
                                  );
+
+                cout << pt(j,i) << ": " << to_string(*ot) << endl << "e1"
+                     << pt(j,i)+(v.first.first)*step
+                     << pt(j,i)+(v.first.second)*step
+                     << endl << "e2"
+                     << pt(j,i)+(v.second.first)*step
+                     << pt(j,i)+(v.second.second)*step
+                     << endl << endl;
                 // in here we want to add our edges to S (the set of all edges)
                 // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
             }
@@ -743,8 +753,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
-    //remove_if(composed.begin(),composed.end(), [](auto value){ return ( value == 0 || value == 15 );});
-
     // Now that we have our composed vector we can construct our single set of points to
     // complete the first step
 
@@ -752,15 +760,16 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // shape and remove these items from the vector and restart the process
 
     // Interpolation, should be a fun use of transform :-D
+    // And then it wasn't, for ftw
 
 
-    map<pt,pair<fpt,fpt>,PointEquality<uint32_t>> interpolated_points;
+    map<pt,pair<pt,pt>,PointEquality<point_t>> interpolated_points;
 
     for(auto i: points){
        // auto alpha = b.r(i.second.first.first); // sp
 
-        fpt e1 = interpolation(i.second.first.first, i.second.first.second, b.r(i.second.first.second) );
-        fpt e2 = interpolation(i.second.second.first, i.second.second.second, b.r(i.second.second.second) );
+        pt e1 = interpolation(i.second.first.first, i.second.first.second, o.r(i.second.first.first), o.r(i.second.first.second), ISOVALUE );
+        pt e2 = interpolation(i.second.second.first, i.second.second.second, o.r(i.second.second.first), o.r(i.second.second.second), ISOVALUE );
 
         interpolated_points[i.first] = make_pair( e1, e2 );
     }
@@ -774,6 +783,12 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 //        return make_pair( pt(value.first), make_pair( move(e1), move(e2) ));
 //    } );
 
+//    auto printit = points[pt(272,327)];
+//    cout << printit.first.first << printit.first.second
+//         << printit.second.first << printit.second.second << endl;
+//    printit = points[pt(277,327)];
+//    cout << printit.first.first << printit.first.second
+//         << printit.second.first << printit.second.second << endl;
     vector<vector<pt>> polygons;
     while(!interpolated_points.empty())
     {
@@ -798,8 +813,9 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         auto it = interpolated_points.begin();
         pt first_pt = it->first;
         poly.emplace_back(first_pt);
-        fpt last_pt = it->second.second;
-        fpt current_pt = it->second.first;
+        pt last_pt = it->second.second;
+        pt current_pt = it->second.first;
+        pt cv = first_pt;
 
         // Remove point
         interpolated_points.erase(it);
@@ -807,48 +823,41 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         // Then find the next
         bool connected = false;
         while( !connected ){
-            auto found = find_if( interpolated_points.begin(), interpolated_points.end(), [&current_pt](auto value){
+
+            vector<pair<pt,pair<pt,pt>>> found;
+            for_each( interpolated_points.begin(), interpolated_points.end(),
+                      [&current_pt,&found](auto value){
                 // Check both edges
-                return (value.second.first == current_pt || value.second.second == current_pt);
+                if (value.second.first == current_pt || value.second.second == current_pt){
+                    found.push_back(value);
+                }
             } );
-
-            bool found_all = false;
-            while(!found_all){
-                auto found2 = find_if( next(found), interpolated_points.end(), [&current_pt](auto value){
-                    // Check both edges
-                    return (value.second.first == current_pt || value.second.second == current_pt);
-                } );
-                if( found2 == interpolated_points.end()){
-                    found_all = true;
-                }else{
-                    // Find closer item
-                    if( found->first.x * found->first.x + found->first.y * found->first.y <
-                        found2->first.x * found2->first.x + found2->first.y * found2->first.y
-                            ){
-                        found = found2;
-                    }
-                }
-            }
-
-
-            // No more points, it's a stragler
-            if(found == interpolated_points.end()){
-                for( auto i: poly){
-                    cout << i << ",";
-                }
-                cout << endl;
-                cout << current_pt;
-                for( auto i: interpolated_points ){
-                    cout << "Point " << i.first << " Edges "
-                         << i.second.first << ", " << i.second.second
-                         << endl;
-                }
+            if( found.empty()){
+                // No points
+                cout << "Broken Segment, Starting new Polygon" << endl;
                 break;
             }
-            poly.emplace_back(found->first);
-            current_pt = ( current_pt == found->second.first ) ? found->second.second : found->second.first;
-            interpolated_points.erase(found);
+            auto best_pt = found.back(); found.pop_back();
+            auto distance = [](pt p1, pt p2){
+              return sqrt(pow(p1.x-p2.x,2)+pow(p1.y-p2.y,2));
+            };
+            cout << "Checking Distances to " << cv << endl;
+            for(auto i: found){
+                cout << "Distance 1: " << i.first << " " << distance( cv, i.first ) << endl;
+                cout << "Distance 2: " << best_pt.first << " " << distance( cv, best_pt.first ) << endl;
+                if(distance( cv, i.first) < distance(cv, best_pt.first)){
+                    best_pt = i;
+                    cout << "Chose Distance 1" << endl;
+                }
+                cout << endl;
+            }
+
+            poly.emplace_back(best_pt.first);
+            cv = best_pt.first;
+            current_pt = ( current_pt == best_pt.second.first ) ? best_pt.second.second : best_pt.second.first;
+            interpolated_points.erase(best_pt.first);
             if( current_pt == last_pt ){
+                cout << "Finished Building Polygon" << endl;
                 connected = true;
             }
         }
@@ -864,12 +873,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     return polygons;
 }
 
-fpt interpolation( pt p, pt q, point_t sp /*, point_t sq, point_t sigma*/){
-    double alpha = sp;
-    cout << p << "," << q << sp << endl;
-    cout << fpt( (1-alpha)*p.x + alpha*q.x, (1-alpha)*p.y + alpha*q.y ) << endl;
+pt interpolation( pt p, pt q, point_t sp, point_t sq, point_t sigma){
+    double alpha = (sigma - sp)/(sq - sp);
 
-    return fpt( (1-alpha)*p.x + alpha*q.x, (1-alpha)*p.y + alpha*q.y );
+    return pt( (1-alpha)*p.x + alpha*q.x, (1-alpha)*p.y + alpha*q.y );
 }
 
 void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness ){
@@ -934,8 +941,8 @@ vector<pair<edge,edge>> edges( uint8_t square ){
      *******************/
     case 2:
     case 13:
-        sides = { make_pair( edge( pt(0,0),pt(0,1) ),
-                             edge( pt(0,1),pt(1,1) )
+        sides = { make_pair( edge( pt(0,0),pt(1,0) ),
+                             edge( pt(1,0),pt(1,1) )
                            )
                 };
         break;
@@ -948,7 +955,7 @@ vector<pair<edge,edge>> edges( uint8_t square ){
      *******************/
     case 3:
     case 12:
-        sides = { make_pair( edge( pt(0,0),pt(1,0) ),
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),
                              edge( pt(0,1),pt(1,1) )
                            )
                 };

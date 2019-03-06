@@ -112,7 +112,8 @@ public:
 };
 
 
-typedef point<uint32_t> pt;
+typedef double point_t;
+typedef point<point_t> pt;
 typedef std::pair<pt,pt> edge;
 
 template<typename T>
