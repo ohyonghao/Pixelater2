@@ -15,7 +15,9 @@ class point
         point( const point<T> &&a):x{std::move(a.x)}, y{std::move(a.y)}{}
         point<T> & operator = (const point<T> & a);
         point<T> & operator = (const point<T> && a){this->x = std::move(a.x);
-                                                    this->y = std::move(a.y);}
+                                                    this->y = std::move(a.y);
+                                                    return *this;
+                                                   }
         template<typename U>
         friend std::ostream & operator<< (std::ostream & out,  const point<U> & p);
         template<typename U>

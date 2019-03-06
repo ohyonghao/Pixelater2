@@ -220,7 +220,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
 vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
 vector<pair<edge,edge>> edges( uint8_t square );
 uint8_t composeBits( const vector<uint32_t> cell );
-pt interpolation( pt p, pt q, point_t sp );
+fpt interpolation( pt p, pt q, point_t sp );
 
 void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness = 10);
 //void draw(Bitmap&o, uint32_t color, pair<uint32_t,uint32_t> coord)
