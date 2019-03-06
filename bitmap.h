@@ -20,6 +20,9 @@ Let's first make our pixel class
 using namespace std;
 
 typedef point<uint32_t> pt;
+typedef point<double> fpt;
+typedef pair<pt,pt> edge;
+
 const uint32_t ISOVALUE = 57;
 class Bitmap
 {
@@ -209,7 +212,7 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
  * \return vector of sets of points that create a completed contour shape
  */
 vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
-
+vector<pair<edge,edge>> edges( uint8_t square );
 uint8_t composeBits( const vector<uint32_t> cell );
 
 void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness = 10);

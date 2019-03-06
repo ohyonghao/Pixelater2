@@ -19,8 +19,15 @@ class point
         template<typename U>
         friend bool operator != (const point<U> & a, const point<U> & b);
 
+        point<T> operator+ (const point<T> & rhs){ return point<T>(this->x+rhs.x, this->y+rhs.y); }
+        point<T> operator* (const T &rhs){ return point<T>(this->x*rhs, this->y*rhs); }
+        template<typename U>
+        friend point<U> operator* (const point<U>& lhs, const U &rhs);
+
 };
 
+template<typename T>
+point<T> operator*( const point<T>& lhs, const T &rhs){ return(lhs.x*rhs, lhs.y*rhs); }
 
 template<typename T>
 //assignment operator
@@ -37,7 +44,6 @@ template<typename T>
 std::ostream & operator<< (std::ostream & out, const point<T> & p)
 {
     out << "(" << p.x << ", " << p.y << ")";
-    out.flush();
 
     return out;
 }
@@ -73,6 +79,8 @@ private:
     point<T> &_p0;
 
 };
+// Think about a lambda creating function like this
+// function<bool(point,point)> makefun(point p0){return [p0](point p1, point p2){...};
 template<typename T>
 bool Compare<T>::compare(const point<T> & a, const point<T> & b)
 {
@@ -89,4 +97,11 @@ bool Compare<T>::compare(const point<T> & a, const point<T> & b)
     }
 }
 
+template<typename T>
+class PointEquality{
+public:
+    size_t operator()(const point<T>& lhs, const point<T>& rhs )const{
+        return ( lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y)  );
+    }
+};
 #endif // POINT_HPP

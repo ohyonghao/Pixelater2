@@ -4,6 +4,7 @@
 #include <valarray>
 #include <iterator>
 #include <string>
+#include <map>
 #include "point.hpp"
 #include "jarvisMarch.hpp"
 #include "bitmap.h"
@@ -671,7 +672,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     vector<uint8_t> composed(w*h/step, 0);
     // For now, our vector of points
 
-    vector<vector<pt>> points(1);
+    map<pt,pair<edge,edge>,PointEquality<uint32_t>> points;
     const uint32_t bpp = b.bpp();
     const uint32_t steps = bpp*step;
     const uint32_t pad = step/2;
@@ -685,6 +686,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // Start out with our padding in place
     // We may need to rethink this to make sure that edge detection
     // works for items that go up to the edge of the image.
+    // NOTE: we might not even need composed
     auto ot = composed.begin()+w*pad+pad;
     for( uint32_t i = pad; i < h-(step+pad); i+=step )
     {
@@ -693,7 +695,33 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             *ot = composeBits({*lt, *rt, *rb, *lb});
             //cout << to_string(*ot);
             if(*ot != 0 && *ot != 15){
-                points[0].push_back(pt(j,i));
+                // Use *ot to add to pt
+                auto vs = edges(*ot); // our v's
+                auto v = vs.front();  // our first v, but in case of disambiuation we'll do something to it
+                if( vs.size() > 1 ){
+                    // Do something with these because of ambiguous case
+                    // One method is to check the previous one, then do the opposite
+                    // If N ? E : W
+                    // If E ? N : S
+                }
+                // map edges into square space from unit square space
+                // v.first == v, v.second == v'
+                // We'll want Points to be a map from j,i -> edge pairs
+                points.insert(make_pair(pt(j,i),make_pair(
+                                     edge(
+                                           pt(j,i)+(v.first.first)*step,
+                                           pt(j,i)+(v.first.second)*step
+                                          ),
+                                     edge(
+                                            pt(j,i)+(v.second.first)*step,
+                                            pt(j,i)+(v.second.second)*step
+                                           )
+                                     ))
+                                 );
+                cout << pt(j,i)+(v.first.first)*step << pt(j,i)+(v.first.second)*step << ", "
+                     << pt(j,i)+(v.second.first)*step << pt(j,i)+(v.second.second)*step << endl;
+                // in here we want to add our edges to S (the set of all edges)
+                // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
             }
             // Increment our horde of iterators
             ++ot; lt+=steps; rt+=steps; lb+=steps; rb+=steps;
@@ -705,7 +733,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         uint32_t leap = bpp*(w*(step-1)+2*pad+1);
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
         ot+=pad;
-        cout << endl;
+        // cout << endl;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
@@ -714,11 +742,70 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // Now that we have our composed vector we can construct our single set of points to
     // complete the first step
 
+    // Idea here, go through each edge pair finding the one that connects, trace out the
+    // shape and remove these items from the vector and restart the process
+
+    vector<vector<pt>> polygons;
+    while(!points.empty())
+    {
+        vector<pt> poly = {};
+        // Put the first point onto our vector
+        // here we have our edges, now what do we do with them?
+        // I'm just taking the second edges second endpoint
+        // This step is listed as union
+        // gamma U next_point
+
+        // Put the point into our polygon
+        // Go to first (ignore second for now)
+        // 1. Find a point that shares the first edge
+        // 2. Place point in bag, remove shared edge, check for next edge
+        // 3. ...
+        // 4. Profit!!
+        // 5. If next edge == current.second, then stop
+
+        // Get the first element by iterator since this is a map, not really anything to
+        // Say this is the first
+        // For a map it->first == key, it->second == value
+        auto it = points.begin();
+        pt first_pt = it->first;
+        poly.push_back(first_pt);
+        edge last_edge = it->second.second;
+        edge current_edge = it->second.first;
+
+        // Remove point
+        points.erase(it);
+
+        // Then find the next
+        bool connected = false;
+        while( !connected ){
+            auto found = find_if( points.begin(), points.end(), [&current_edge](auto value){
+                // Check both edges
+                return (value.second.first == current_edge || value.second.second == current_edge);
+            } );
+            if(found == points.end()){
+                break;
+            }
+            poly.push_back(found->first);
+            current_edge = ( current_edge == found->second.first ) ? found->second.second : found->second.first;
+            points.erase(found);
+            if( current_edge == last_edge ){
+                connected = true;
+            }
+        }
+
+        polygons.push_back(poly);
+    }
     // Interpolation goes somewhere y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+    // This is called as lerp( Sample1(corner value), Sample2(corner value), 0, 1, (isovalue))
     // The limiting case should be when our step = 1
-    return points;
+    return polygons;
 }
 
+
+
+fpt interlopation(){
+    return fpt(0,0);
+}
 
 void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness ){
     // Need a good way to pull out the color, or split this, but for now we'll
@@ -749,8 +836,16 @@ uint8_t composeBits( const vector<uint32_t> cell ){
     return value;
 }
 
-vector<pair<pt,pt>> edges( uint8_t square ){
-    vector<pair<pt,pt>> sides;
+/*
+ * The idea here is to return a set of a pair of edges. Why this isn't just a pair of
+ * edges is due to the ambiguous case where there are two possible pairs of edges.
+ * We'll define an edge as two vertices, (v,v')
+ *
+ * We want to map from the unit square to the square at (i,j), but our table will only
+ * return the unit square edges, we'll do the mapping after calling edges.
+ */
+vector<pair<edge,edge>> edges( uint8_t square ){
+    vector<pair<edge,edge>> sides;
     switch( square ){
     /* ******************
      * Bottom, Left
@@ -760,7 +855,10 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      *******************/
     case 1:
     case 14:
-        sides = {make_pair(pt(1,0),pt(0,1))};
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),
+                             edge( pt(0,0),pt(1,0) )
+                           )
+                };
         break;
 
     /* ******************
@@ -771,7 +869,10 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      *******************/
     case 2:
     case 13:
-        sides = {make_pair(pt(0,0),pt(1,1))};
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),
+                             edge( pt(0,1),pt(1,1) )
+                           )
+                };
         break;
 
     /* ******************
@@ -782,7 +883,10 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      *******************/
     case 3:
     case 12:
-        sides = {make_pair(pt(0,0),pt(0,1))};
+        sides = { make_pair( edge( pt(0,0),pt(1,0) ),
+                             edge( pt(0,1),pt(1,1) )
+                           )
+                };
         break;
 
     /* ******************
@@ -793,7 +897,10 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      *******************/
     case 4:
     case 11:
-        sides = {make_pair(pt(1,0),pt(0,1))};
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
+                             edge( pt(1,0),pt(1,1) )
+                           )
+                };
         break;
 
     /* ******************
@@ -804,7 +911,13 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      ********************/
     case 5:
     case 10:
-        sides = {make_pair(pt(1,0),pt(0,1)), make_pair(pt(0,1),pt(1,0))};
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
+                             edge( pt(1,1),pt(1,0) )
+                           ),
+                  make_pair( edge( pt(0,0),pt(0,1) ),
+                             edge( pt(0,0),pt(1,0) )
+                           )
+                };
         break;
 
     /* *******************
@@ -814,10 +927,11 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      * +==-
      *********************/
     case 6:
-        sides = {make_pair(pt(1,0),pt(0,0))};
-        break;
     case 9:
-        sides = {make_pair(pt(1,1),pt(0,1))};
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
+                             edge( pt(0,0),pt(1,0) )
+                           )
+                };
         break;
 
     /* ********************
@@ -828,6 +942,11 @@ vector<pair<pt,pt>> edges( uint8_t square ){
      **********************/
     case 7:
     case 8:
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
+                             edge( pt(0,0),pt(0,1) )
+                           )
+                };
+        break;
     /* **********************
      * None
      ***********************/
