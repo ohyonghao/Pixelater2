@@ -112,7 +112,7 @@ public:
 };
 
 
-typedef double point_t;
+typedef uint32_t point_t;
 typedef point<point_t> pt;
 typedef std::pair<pt,pt> edge;
 

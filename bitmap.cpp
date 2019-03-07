@@ -620,7 +620,7 @@ void contours(Bitmap&o){
     Bitmap b(o);
     grayscale(b);
     binaryGray(o, ISOVALUE);
-    auto cont = findContours(b,4);
+    auto cont = findContours(b,5);
 
 //    vector<vector<pt>> jm;
 //    for( auto& i: cont){
