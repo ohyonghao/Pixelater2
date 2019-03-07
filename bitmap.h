@@ -125,7 +125,7 @@ private:
     inline uint8_t& getPixel( int x, int y, uint32_t mask );
     inline const uint8_t& getPixel( int x, int y, uint32_t mask )const;
 
-    vector<unsigned char>  bits;
+    vector<uint8_t>  bits;
 public:
     Bitmap() = default;
     Bitmap(const Bitmap&, bool noData = false);

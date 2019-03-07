@@ -173,11 +173,11 @@ uint32_t Bitmap::maskToInt( uint32_t mask ) noexcept{
  * @param mask is the integer position mask, not to be confused with an actual bitmask
  * Does not check bounds!
  */
-uint8_t& Bitmap::getPixel( int x, int y, uint32_t mask ){
+inline uint8_t& Bitmap::getPixel( int x, int y, uint32_t mask ){
     return const_cast<uint8_t&>(static_cast<const Bitmap&>(*this).getPixel(x,y,mask));
 }
 
-const uint8_t& Bitmap::getPixel(int x, int y, uint32_t mask) const{
+inline const uint8_t& Bitmap::getPixel(int x, int y, uint32_t mask) const{
     if( x > dibs.width || y > ( dibs.height < 0 ? -dibs.height : dibs.height ) )
         throw OutOfBoundsException();
     if( dibs.height < 0 )
@@ -622,26 +622,26 @@ void contours(Bitmap&o){
     binaryGray(o, ISOVALUE);
     auto cont = findContours(b,5);
 
-    vector<vector<pt>> jm;
-    for( auto& i: cont){
-        jm.push_back(jarvisMarch(i));
-    }
-    for( auto& i: jm){
-        for(auto& j: i){
-            draw( o, j.x, j.y, 0x00FF00, 8);
-        }
-    }
-
-//    vector<vector<pt>> hulls;
-//    for( auto& i: cont ){
-//        if(i.size() > 3 )
-//        hulls.push_back(grahamScan(i));
+//    vector<vector<pt>> jm;
+//    for( auto& i: cont){
+//        jm.push_back(jarvisMarch(i));
 //    }
-//    for( auto& i: hulls){
+//    for( auto& i: jm){
 //        for(auto& j: i){
-//            draw( o, j.x, j.y, 0xFF00FF, 4);
+//            draw( o, j.x, j.y, 0x00FF00, 8);
 //        }
 //    }
+
+    vector<vector<pt>> hulls;
+    for( auto& i: cont ){
+        if(i.size() > 3 )
+        hulls.push_back(grahamScan(i));
+    }
+    for( auto& i: hulls){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0xFF00FF, 4);
+        }
+    }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -667,7 +667,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // The grids are independent of other grids
     //binaryGray( b, ISOVALUE);
     transform( o.getBits().begin(), o.getBits().end(), b.getBits().begin(),
-        [](auto value){ return value != 255; } );
+        [](auto value){ return (value == 255) ? 1: 0; } );
 
     // For each bit we'll want to compose it into a new vector
     int32_t w = b.width();
@@ -683,10 +683,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // Some information for moving iterators
     const int32_t bpp = b.bpp();
     const int32_t steps = bpp*step;
-    const int32_t pad = 2;
+    //const int32_t pad = 2;
 
     // The four corners march fourth on their horses towards the apocalypse
-    auto lb = b.getBits().begin()+bpp*(w*pad+pad)+b.rmask();
+    auto lb = b.getBits().begin()+b.rmask();
     auto lt = lb+w*steps;
     auto rt = lb+w*steps+steps;
     auto rb = lb+steps;
@@ -695,16 +695,23 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // We may need to rethink this to make sure that edge detection
     // works for items that go up to the edge of the image.
     // NOTE: we might not even need composed
-    auto ot = composed.begin()+w*pad+pad;
-    for( uint32_t i = pad; i < h-(step+pad); i+=step )
+    //auto ot = composed.begin()+w;
+    uint8_t ot;
+    //uint32_t leap = bpp*(w*(step-1)+w%step+step); Works on 180x180, not 249x346
+    uint32_t leap = bpp*(w*(step-1)+w%step); // 249x346 we should have an extra 1
+    if( !(w%step) ){
+        leap+=steps;
+    }
+    int count = 0;
+    for( uint32_t i = 0; i < h-step; i+=step )
     {
-        for( uint32_t j = pad; j < w-(step+pad); j+=step )
+        for( uint32_t j = 0; j < w-step; j+=step )
         {
-            *ot = composeBits({*lt, *rt, *rb, *lb});
-            //cout << to_string(*ot);
-            if(*ot != 0 && *ot != 15){
+            count+=step;
+            ot = composeBits({*lt, *rt, *rb, *lb});
+            if(ot != 0 && ot != 15){
                 // Use *ot to add to pt
-                auto vs = edges(*ot); // our v's
+                auto vs = edges(ot); // our v's
                 auto v = vs.front();  // our first v, but in case of disambiuation we'll do something to it
                 if( vs.size() > 1 ){
                     // Do something with these because of ambiguous case
@@ -729,7 +736,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                                      ))
                                  );
 
-                cout << pt(j,i) << ": " << to_string(*ot) << endl << "e1"
+                cout << pt(j,i) << ": " << to_string(ot) << endl << "e1"
                      << pt(j,i)+(v.first.first)*step
                      << pt(j,i)+(v.first.second)*step
                      << endl << "e2"
@@ -741,14 +748,17 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             }
             // Increment our horde of iterators
             ++ot; lt+=steps; rt+=steps; lb+=steps; rb+=steps;
+            if( lt > b.getBits().end() ){
+                cout << "We should never get here." << endl;
+            }
             // As long as there is no padding this should be good
         }
         // each time we reach the end of a line we need to jump up steps*width, but also account
         // for the step we already took
         // We are taking the height in steps
-        uint32_t leap = bpp*(w*(step-1)+2*pad+1);
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
-        ot+=pad;
+        count +=w*(step-1);
+        //ot+=pad;
         // cout << endl;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
@@ -783,12 +793,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 //        return make_pair( pt(value.first), make_pair( move(e1), move(e2) ));
 //    } );
 
-//    auto printit = points[pt(272,327)];
-//    cout << printit.first.first << printit.first.second
-//         << printit.second.first << printit.second.second << endl;
-//    printit = points[pt(277,327)];
-//    cout << printit.first.first << printit.first.second
-//         << printit.second.first << printit.second.second << endl;
     vector<vector<pt>> polygons;
     while(!interpolated_points.empty())
     {
@@ -841,16 +845,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             auto distance = [](pt p1, pt p2){
               return sqrt(pow(p1.x-p2.x,2)+pow(p1.y-p2.y,2));
             };
-            cout << "Checking Distances to " << cv << endl;
-            for(auto i: found){
-                cout << "Distance 1: " << i.first << " " << distance( cv, i.first ) << endl;
-                cout << "Distance 2: " << best_pt.first << " " << distance( cv, best_pt.first ) << endl;
-                if(distance( cv, i.first) < distance(cv, best_pt.first)){
-                    best_pt = i;
-                    cout << "Chose Distance 1" << endl;
-                }
-                cout << endl;
-            }
 
             poly.emplace_back(best_pt.first);
             cv = best_pt.first;
@@ -863,11 +857,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         }
         polygons.push_back(poly);
     }
-    // Interpolation goes somewhere y0 + (y1 - y0) * (x - x0) / (x1 - x0);
-    // This is called as lerp( Sample1(corner value), Sample2(corner value), 0, 1, (isovalue))
-
-    // The interpolation points to a unique place along the edge that it intersects and is
-    // needed to actually do the union.
     // The limiting case should be when our step = 1
 
     return polygons;
@@ -904,6 +893,9 @@ uint8_t composeBits( const vector<uint32_t> cell ){
     for(auto i: cell){
         value <<= 1;
         value |= i;
+    }
+    if( value == 16 ){
+        cout << value << "Should not be 16";
     }
     return value;
 }
