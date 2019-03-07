@@ -27,7 +27,7 @@ template<typename T>
 //check for CCW - counter clock wise
 bool counterClockWise(const point<T> & p1, const point<T> & p2, const point<T> & p3)
 {
-	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
+    int32_t result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
 	if(result < 0)
 		return true;
 	else
@@ -38,7 +38,7 @@ bool counterClockWise(const point<T> & p1, const point<T> & p2, const point<T> &
 template<typename T>
 bool colinear(const point<T> & p1, const point<T> & p2, const point<T> & p3)
 {
-	int result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
+    int32_t result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
 	return result == 0;
 }
 
@@ -124,7 +124,7 @@ std::vector<point<T>> jarvisMarch(std::vector<point<T>> & points)
 }
 
 template<typename T>
-void swap(point<T> lhs, point<T> rhs ){
+void swap(point<T>& lhs, point<T>& rhs ){
     point<T> temp = rhs;
     rhs = lhs;
     lhs = temp;
@@ -140,11 +140,11 @@ std::vector<point<T>> grahamScan(std::vector<point<T>> & points)
 		return points;
 
 	//find the point which has the lowest y-coordinate
-	int min_y = points[0].y;
-	int Min = 0;
+    T min_y = points[0].y;
+    T Min = 0;
 	for(int i = 1; i < n; ++i)
 	{
-		int cur_y = points[i].y;
+        T cur_y = points[i].y;
 		if(cur_y < min_y ||((min_y == cur_y) && (points[i].x < points[Min].x)))
 		{
 			Min = i;

@@ -5,6 +5,7 @@
 #include <iterator>
 #include <string>
 #include <map>
+#include <iomanip>
 #include "point.hpp"
 #include "jarvisMarch.hpp"
 #include "bitmap.h"
@@ -620,30 +621,30 @@ void contours(Bitmap&o){
     Bitmap b(o);
     grayscale(b);
     binaryGray(o, ISOVALUE);
-    auto cont = findContours(b,4);
+    auto cont = findContours(b,5);
 
     auto process_cont{cont};
-    vector<vector<pt>> jm;
-    for( auto& i: process_cont){
-        jm.push_back(jarvisMarch(i));
-    }
-    for( auto& i: jm){
-        for(auto& j: i){
-            draw( o, j.x, j.y, 0x00FF00, 8);
-        }
-    }
+//    vector<vector<pt>> jm;
+//    for( auto& i: process_cont){
+//        jm.push_back(jarvisMarch(i));
+//    }
+//    for( auto& i: jm){
+//        for(auto& j: i){
+//            draw( o, j.x, j.y, 0x00FF00, 8);
+//        }
+//    }
 
-    process_cont = cont;
-    vector<vector<pt>> hulls;
-    for( auto& i: process_cont ){
-        if(i.size() > 3 )
-        hulls.push_back(grahamScan(i));
-    }
-    for( auto& i: hulls){
-        for(auto& j: i){
-            draw( o, j.x, j.y, 0xFF00FF, 4);
-        }
-    }
+//    process_cont = cont;
+//    vector<vector<pt>> hulls;
+//    for( auto& i: process_cont ){
+//        if(i.size() > 3 )
+//        hulls.push_back(grahamScan(i));
+//    }
+//    for( auto& i: hulls){
+//        for(auto& j: i){
+//            draw( o, j.x, j.y, 0xFF00FF, 4);
+//        }
+//    }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -654,6 +655,7 @@ void contours(Bitmap&o){
         }
         color += 0x101123;
     }
+    cout << "Count: " << count << endl;
 }
 
 vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
@@ -689,14 +691,17 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
     uint8_t ot = 0;
 
+    vector<vector<uint32_t> > ots;
     // Got it all into one statement without conditionals :-D
     uint32_t leap = bpp*(w*(step-1)+w%step + !(w%step)*step);
 
-    for( uint32_t i = 0; i < h-step; i+=step )
+    for( uint32_t j = 0; j < h-step; j+=step )
     {
-        for( uint32_t j = 0; j < w-step; j+=step )
+        ots.emplace_back(w/step);
+        for( uint32_t i = 0; i < w-step; i+=step )
         {
             ot = composeBits({*lt, *rt, *rb, *lb});
+            ots[j/step][i/step] = ot;
             if(ot != 0 && ot != 15){
                 // Use *ot to add to pt
                 auto vs = edges(ot); // our v's
@@ -712,39 +717,46 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                 // We'll want Points to be a map from j,i -> edge pairs
 
                 // make_edge gurantees vertexs are ordered
-                points.insert(make_pair(pt(j,i),make_pair(
+                points.insert(make_pair(pt(i,j),make_pair(
                                      make_edge<point_t>(
-                                           pt(j,i)+(v.first.first)*step,
-                                           pt(j,i)+(v.first.second)*step
+                                           pt(i,j)+(v.first.first)*step,
+                                           pt(i,j)+(v.first.second)*step
                                           ),
                                      make_edge<point_t>(
-                                            pt(j,i)+(v.second.first)*step,
-                                            pt(j,i)+(v.second.second)*step
+                                            pt(i,j)+(v.second.first)*step,
+                                            pt(i,j)+(v.second.second)*step
                                            )
                                      ))
                                  );
 
-                cout << pt(j,i) << ": " << to_string(ot) << endl << "e1"
-                     << pt(j,i)+(v.first.first)*step
-                     << pt(j,i)+(v.first.second)*step
-                     << endl << "e2"
-                     << pt(j,i)+(v.second.first)*step
-                     << pt(j,i)+(v.second.second)*step
-                     << endl << endl;
+//                cout << pt(j,i) << ": " << to_string(ot) << endl << "e1"
+//                     << pt(j,i)+(v.first.first)*step
+//                     << pt(j,i)+(v.first.second)*step
+//                     << endl << "e2"
+//                     << pt(j,i)+(v.second.first)*step
+//                     << pt(j,i)+(v.second.second)*step
+//                     << endl << endl;
                 // in here we want to add our edges to S (the set of all edges)
                 // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
             }
             // Increment our horde of iterators
             lt+=steps; rt+=steps; lb+=steps; rb+=steps;
-//            if( lt > b.getBits().end() ){
-//                cout << "We should never get here." << endl;
-//            }
+            if( lt > b.getBits().end() ){
+                cout << "We should never get here." << endl;
+            }
             // As long as there is no padding this should be good
         }
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
+    for( auto j: ots ){
+        for(auto i: j){
+            cout << setw(3) << i << " ";
+        }
+        cout << endl;
+    }
+    cout << "Point Size: " << points.size() << endl;
     // Now that we have our composed vector we can construct our single set of points to
     // complete the first step
 
@@ -868,9 +880,6 @@ uint8_t composeBits( const vector<uint32_t> cell ){
     for(auto i: cell){
         value <<= 1;
         value |= i;
-    }
-    if( value == 16 ){
-        cout << value << "Should not be 16";
     }
     return value;
 }
