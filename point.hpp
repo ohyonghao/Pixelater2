@@ -77,12 +77,13 @@ bool operator != (const point<T> & a, const point<T> & b)
 template<typename T>
 class Compare{
 public:
-    Compare(point<T>& p0):_p0{p0}{}
+    Compare(const point<T>& p0):_p0{p0}{}
     bool compare(const point<T> & a, const point<T> & b);
     bool operator()(const point<T> & a, const point<T> & b){return compare(a,b);}
-    point<T>& p0(){ return _p0;}
+    const point<T>& p0()const{ return _p0;}
+    point<T>& p0(){return _p0;}
 private:
-    point<T> &_p0;
+    point<T> _p0;
 
 };
 // Think about a lambda creating function like this
@@ -112,7 +113,7 @@ public:
 };
 
 
-typedef uint32_t point_t;
+typedef double point_t;
 typedef point<point_t> pt;
 typedef std::pair<pt,pt> edge;
 

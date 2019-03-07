@@ -620,28 +620,30 @@ void contours(Bitmap&o){
     Bitmap b(o);
     grayscale(b);
     binaryGray(o, ISOVALUE);
-    auto cont = findContours(b,5);
+    auto cont = findContours(b,4);
 
-//    vector<vector<pt>> jm;
-//    for( auto& i: cont){
-//        jm.push_back(jarvisMarch(i));
-//    }
-//    for( auto& i: jm){
-//        for(auto& j: i){
-//            draw( o, j.x, j.y, 0x00FF00, 8);
-//        }
-//    }
+    auto process_cont{cont};
+    vector<vector<pt>> jm;
+    for( auto& i: process_cont){
+        jm.push_back(jarvisMarch(i));
+    }
+    for( auto& i: jm){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0x00FF00, 8);
+        }
+    }
 
-//    vector<vector<pt>> hulls;
-//    for( auto& i: cont ){
-//        if(i.size() > 3 )
-//        hulls.push_back(grahamScan(i));
-//    }
-//    for( auto& i: hulls){
-//        for(auto& j: i){
-//            draw( o, j.x, j.y, 0xFF00FF, 4);
-//        }
-//    }
+    process_cont = cont;
+    vector<vector<pt>> hulls;
+    for( auto& i: process_cont ){
+        if(i.size() > 3 )
+        hulls.push_back(grahamScan(i));
+    }
+    for( auto& i: hulls){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0xFF00FF, 4);
+        }
+    }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -650,7 +652,7 @@ void contours(Bitmap&o){
             ++count;
             draw( o, j.x, j.y, color, 2);
         }
-        color += 0x001123;
+        color += 0x101123;
     }
 }
 
@@ -674,10 +676,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
     // Some information for moving iterators
     // ensure against negative height
-    const int32_t h = b.height()*(b.height() < 0 ? -1:1);
-    const int32_t w = b.width();
-    const int32_t bpp = b.bpp();
-    const int32_t steps = bpp*step;
+    const uint32_t h = static_cast<uint32_t>(b.height()*(b.height() < 0 ? -1:1));
+    const uint32_t w = static_cast<uint32_t>(b.width());
+    const uint32_t bpp = b.bpp();
+    const uint32_t steps = bpp*step;
 
     // The four corners march fourth on their horses towards the apocalypse
     auto lb = b.getBits().begin()+b.rmask();
@@ -733,10 +735,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                 // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
             }
             // Increment our horde of iterators
-            ++ot; lt+=steps; rt+=steps; lb+=steps; rb+=steps;
-            if( lt > b.getBits().end() ){
-                cout << "We should never get here." << endl;
-            }
+            lt+=steps; rt+=steps; lb+=steps; rb+=steps;
+//            if( lt > b.getBits().end() ){
+//                cout << "We should never get here." << endl;
+//            }
             // As long as there is no padding this should be good
         }
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
@@ -755,8 +757,8 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     map<pt,pair<pt,pt>,PointEquality<point_t>> interpolated_points;
 
     for(auto i: points){
-        pt e1 = interpolation(i.second.first.first, i.second.first.second, o.r(i.second.first.first), o.r(i.second.first.second), ISOVALUE );
-        pt e2 = interpolation(i.second.second.first, i.second.second.second, o.r(i.second.second.first), o.r(i.second.second.second), ISOVALUE );
+        pt e1 = interpolation(i.second.first.first, i.second.first.second, b.r(i.second.first.first), b.r(i.second.first.second), 0 );
+        pt e2 = interpolation(i.second.second.first, i.second.second.second, b.r(i.second.second.first), b.r(i.second.second.second), 0 );
 
         interpolated_points[i.first] = make_pair( e1, e2 );
     }
@@ -795,7 +797,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                       [&current_edge,&found](auto value){
                 // Check both edges
                 if (value.second.first == current_edge || value.second.second == current_edge){
-                    found.push_back(value);
+                    found.emplace_back(value);
                 }
             } );
             if( found.empty()){
@@ -804,9 +806,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                 break;
             }
             auto best_pt = found.back(); found.pop_back();
-            auto distance = [](pt p1, pt p2){
-              return sqrt(pow(p1.x-p2.x,2)+pow(p1.y-p2.y,2));
-            };
+
             // Find the closest point if there is ambiquity
             // We might need to instead track the previous point and
             // Find which direction we came from to know where to go.
