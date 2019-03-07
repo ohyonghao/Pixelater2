@@ -620,7 +620,7 @@ void contours(Bitmap&o){
     Bitmap b(o);
     grayscale(b);
     binaryGray(o, ISOVALUE);
-    auto cont = findContours(b,5);
+    auto cont = findContours(b,4);
 
 //    vector<vector<pt>> jm;
 //    for( auto& i: cont){
@@ -632,16 +632,16 @@ void contours(Bitmap&o){
 //        }
 //    }
 
-    vector<vector<pt>> hulls;
-    for( auto& i: cont ){
-        if(i.size() > 3 )
-        hulls.push_back(grahamScan(i));
-    }
-    for( auto& i: hulls){
-        for(auto& j: i){
-            draw( o, j.x, j.y, 0xFF00FF, 4);
-        }
-    }
+//    vector<vector<pt>> hulls;
+//    for( auto& i: cont ){
+//        if(i.size() > 3 )
+//        hulls.push_back(grahamScan(i));
+//    }
+//    for( auto& i: hulls){
+//        for(auto& j: i){
+//            draw( o, j.x, j.y, 0xFF00FF, 4);
+//        }
+//    }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -669,21 +669,15 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     transform( o.getBits().begin(), o.getBits().end(), b.getBits().begin(),
         [](auto value){ return (value == 255) ? 1: 0; } );
 
-    // For each bit we'll want to compose it into a new vector
-    int32_t w = b.width();
-    // ensure against negative height
-    int32_t h = b.height()*(b.height() < 0 ? -1:1);
-
-    // Our vector to put things in
-    vector<uint8_t> composed(w*h/step, 0);
-
     // For now, our map of points
     map<pt,pair<edge,edge>,PointEquality<point_t>> points;
 
     // Some information for moving iterators
+    // ensure against negative height
+    const int32_t h = b.height()*(b.height() < 0 ? -1:1);
+    const int32_t w = b.width();
     const int32_t bpp = b.bpp();
     const int32_t steps = bpp*step;
-    //const int32_t pad = 2;
 
     // The four corners march fourth on their horses towards the apocalypse
     auto lb = b.getBits().begin()+b.rmask();
@@ -691,23 +685,15 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     auto rt = lb+w*steps+steps;
     auto rb = lb+steps;
 
-    // Start out with our padding in place
-    // We may need to rethink this to make sure that edge detection
-    // works for items that go up to the edge of the image.
-    // NOTE: we might not even need composed
-    //auto ot = composed.begin()+w;
-    uint8_t ot;
-    //uint32_t leap = bpp*(w*(step-1)+w%step+step); Works on 180x180, not 249x346
-    uint32_t leap = bpp*(w*(step-1)+w%step); // 249x346 we should have an extra 1
-    if( !(w%step) ){
-        leap+=steps;
-    }
-    int count = 0;
+    uint8_t ot = 0;
+
+    // Got it all into one statement without conditionals :-D
+    uint32_t leap = bpp*(w*(step-1)+w%step + !(w%step)*step);
+
     for( uint32_t i = 0; i < h-step; i+=step )
     {
         for( uint32_t j = 0; j < w-step; j+=step )
         {
-            count+=step;
             ot = composeBits({*lt, *rt, *rb, *lb});
             if(ot != 0 && ot != 15){
                 // Use *ot to add to pt
@@ -753,13 +739,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             }
             // As long as there is no padding this should be good
         }
-        // each time we reach the end of a line we need to jump up steps*width, but also account
-        // for the step we already took
-        // We are taking the height in steps
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
-        count +=w*(step-1);
-        //ot+=pad;
-        // cout << endl;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
@@ -772,36 +752,19 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // Interpolation, should be a fun use of transform :-D
     // And then it wasn't, for ftw
 
-
     map<pt,pair<pt,pt>,PointEquality<point_t>> interpolated_points;
 
     for(auto i: points){
-       // auto alpha = b.r(i.second.first.first); // sp
-
         pt e1 = interpolation(i.second.first.first, i.second.first.second, o.r(i.second.first.first), o.r(i.second.first.second), ISOVALUE );
         pt e2 = interpolation(i.second.second.first, i.second.second.second, o.r(i.second.second.first), o.r(i.second.second.second), ISOVALUE );
 
         interpolated_points[i.first] = make_pair( e1, e2 );
     }
 
-//    transform( points.begin(), points.end(), interpolated_points.begin(), [&b](auto value){
-//        auto alpha = b.r(value.second.first.first); // sp
-
-//        pt e1 = interpolation(value.second.first.first, value.second.first.second, alpha );
-//        pt e2 = interpolation(value.second.second.first, value.second.second.second, alpha );
-
-//        return make_pair( pt(value.first), make_pair( move(e1), move(e2) ));
-//    } );
-
     vector<vector<pt>> polygons;
     while(!interpolated_points.empty())
     {
         vector<pt> poly = {};
-        // Put the first point onto our vector
-        // here we have our edges, now what do we do with them?
-        // I'm just taking the second edges second endpoint
-        // This step is listed as union
-        // gamma U next_point
 
         // Put the point into our polygon
         // Go to first (ignore second for now)
@@ -811,14 +774,13 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         // 4. Profit!!
         // 5. If next edge == current.second, then stop
 
-        // Get the first element by iterator since this is a map, not really anything to
-        // Say this is the first
+        // Get the first element by iterator since this is a map
         // For a map it->first == key, it->second == value
         auto it = interpolated_points.begin();
         pt first_pt = it->first;
         poly.emplace_back(first_pt);
-        pt last_pt = it->second.second;
-        pt current_pt = it->second.first;
+        pt last_edge = it->second.second;
+        pt current_edge = it->second.first;
         pt cv = first_pt;
 
         // Remove point
@@ -830,9 +792,9 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
             vector<pair<pt,pair<pt,pt>>> found;
             for_each( interpolated_points.begin(), interpolated_points.end(),
-                      [&current_pt,&found](auto value){
+                      [&current_edge,&found](auto value){
                 // Check both edges
-                if (value.second.first == current_pt || value.second.second == current_pt){
+                if (value.second.first == current_edge || value.second.second == current_edge){
                     found.push_back(value);
                 }
             } );
@@ -845,12 +807,25 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             auto distance = [](pt p1, pt p2){
               return sqrt(pow(p1.x-p2.x,2)+pow(p1.y-p2.y,2));
             };
+            // Find the closest point if there is ambiquity
+            // We might need to instead track the previous point and
+            // Find which direction we came from to know where to go.
+            for( auto i: found ){
+                if( distance( cv, i.first) < distance( cv, best_pt.first)){
+                    best_pt = i;
+                }
+            }
 
+            // Place the best point into our polygon
             poly.emplace_back(best_pt.first);
+
+            // Update the current vertex
             cv = best_pt.first;
-            current_pt = ( current_pt == best_pt.second.first ) ? best_pt.second.second : best_pt.second.first;
+
+            // We joined one side, we want to join the other side next
+            current_edge = ( current_edge == best_pt.second.first ) ? best_pt.second.second : best_pt.second.first;
             interpolated_points.erase(best_pt.first);
-            if( current_pt == last_pt ){
+            if( current_edge == last_edge ){
                 cout << "Finished Building Polygon" << endl;
                 connected = true;
             }
@@ -948,7 +923,7 @@ vector<pair<edge,edge>> edges( uint8_t square ){
     case 3:
     case 12:
         sides = { make_pair( edge( pt(0,0),pt(0,1) ),
-                             edge( pt(0,1),pt(1,1) )
+                             edge( pt(1,0),pt(1,1) )
                            )
                 };
         break;
