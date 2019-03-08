@@ -231,6 +231,8 @@ void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness 
 //void draw(Bitmap&o, uint32_t color, pair<uint32_t,uint32_t> coord)
 //{draw(o, coord.first, coord.second, color );}
 
+void drawLine(Bitmap & o, const pt & p1, const pt & p2, uint32_t color, uint32_t thickness);
+
 void contours(Bitmap& b);
 
 #endif // MY_BITMAP_H_
