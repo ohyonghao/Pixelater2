@@ -634,17 +634,17 @@ void contours(Bitmap&o){
 //        }
 //    }
 
-//    process_cont = cont;
-//    vector<vector<pt>> hulls;
-//    for( auto& i: process_cont ){
-//        if(i.size() > 3 )
-//        hulls.push_back(grahamScan(i));
-//    }
-//    for( auto& i: hulls){
-//        for(auto& j: i){
-//            draw( o, j.x, j.y, 0xFF00FF, 4);
-//        }
-//    }
+    process_cont = cont;
+    vector<vector<pt>> hulls;
+    for( auto& i: process_cont ){
+        if(i.size() > 3 )
+        hulls.push_back(grahamScan(i));
+    }
+    for( auto& i: hulls){
+        for(auto& j: i){
+            draw( o, j.x, j.y, 0xFF00FF, 4);
+        }
+    }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -662,15 +662,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 {
     Bitmap b(o);
     binaryGray(b, ISOVALUE);
-    // Make it a binary by using a threshold and transforming the entire thing
-
-    // b = binary(b);
-    // Contouring cell is represented by 2x2 pixels
-    // Compose the 4 bits
+   // Make it a binary by using a threshold and transforming the entire thing
 
     // The grids are independent of other grids
-    //binaryGray( b, ISOVALUE);
-    transform( o.getBits().begin(), o.getBits().end(), b.getBits().begin(),
+    transform( b.getBits().begin(), b.getBits().end(), b.getBits().begin(),
         [](auto value){ return (value == 255) ? 1: 0; } );
 
     // For now, our map of points
@@ -729,16 +724,13 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                                      ))
                                  );
 
-//                cout << pt(j,i) << ": " << to_string(ot) << endl << "e1"
-//                     << pt(j,i)+(v.first.first)*step
-//                     << pt(j,i)+(v.first.second)*step
-//                     << endl << "e2"
-//                     << pt(j,i)+(v.second.first)*step
-//                     << pt(j,i)+(v.second.second)*step
-//                     << endl << endl;
+
                 // in here we want to add our edges to S (the set of all edges)
                 // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
+            }else{
             }
+            pt current_pt(i,j);
+
             // Increment our horde of iterators
             lt+=steps; rt+=steps; lb+=steps; rb+=steps;
             if( lt > b.getBits().end() ){

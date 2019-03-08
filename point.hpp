@@ -26,6 +26,7 @@ class point
         friend bool operator != (const point<U> & a, const point<U> & b);
 
         point<T> operator+ (const point<T> & rhs){ return point<T>(this->x+rhs.x, this->y+rhs.y); }
+        point<T>& operator+=(const point<T> & rhs){this->x += rhs.x; this->y += rhs.y; return *this; }
         point<T> operator* (const T &rhs){ return point<T>(this->x*rhs, this->y*rhs); }
         template<typename U>
         friend point<U> operator* (const point<U>& lhs, const U &rhs);
