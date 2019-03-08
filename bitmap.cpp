@@ -690,21 +690,22 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     const uint32_t steps = bpp*step;
 
     // The four corners march fourth on their horses towards the apocalypse
-    auto lb = b.getBits().begin()+b.rmask();
-    auto lt = lb+w*steps;
-    auto rt = lb+w*steps+steps;
-    auto rb = lb+steps;
 
-    uint8_t ot = 0;
+    auto rb = b.getBits().begin()+b.rmask()+steps;
+    auto rt = rb+w*steps;
 
     // Got it all into one statement without conditionals :-D
     uint32_t leap = bpp*(w*(step-1)+w%step + !(w%step)*step);
 
     for( uint32_t j = 0; j < h-step; j+=step )
     {
+        // Set the bits in 2,3
+        uint8_t ot = *(rb-steps) <<2 | *(rb-steps) << 1;
+
         for( uint32_t i = 0; i < w-step; i+=step )
         {
-            ot = composeBits(*lt, *rt, *rb, *lb);
+            // Bitwise map pos 2,3 to 1,4
+            ot = composeBits(ot, *rb, *rt);
             if(ot != 0 && ot != 15){
                 // Use *ot to add to pt
                 auto vs = edges(ot); // our v's
@@ -717,8 +718,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                 }
                 // map edges into square space from unit square space
                 // v.first == v, v.second == v'
-                // We'll want Points to be a map from j,i -> edge pairs
+                // Points is a map from i,j -> edge pairs
 
+                // in here we want to add our edges to S (the set of all edges)
+                // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
                 // make_edge gurantees vertexs are ordered
                 points.insert(make_pair(pt(i,j),make_pair(
                                      make_edge<point_t>(
@@ -731,22 +734,16 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
                                            )
                                      ))
                                  );
-
-
-                // in here we want to add our edges to S (the set of all edges)
-                // We'll do (e1+(i,j)),(e2+(i,j)) as our edge pairs
-            }else{
             }
-            pt current_pt(i,j);
-
-            // Increment our horde of iterators
-            lt+=steps; rt+=steps; lb+=steps; rb+=steps;
-            if( lt > b.getBits().end() ){
+            rt+=steps;
+            rb+=steps;
+            if( rt > b.getBits().end() ){
                 cout << "We should never get here." << endl;
             }
             // As long as there is no padding this should be good
         }
-        lt+=leap; rt+=leap; lb+=leap; rb+=leap;
+        rt+=leap;
+        rb+=leap;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
@@ -795,9 +792,8 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         interpolated_points.erase(it);
 
         // Then find the next
-        bool connected = false;
-        while( !connected ){
-
+        bool done = false;
+        while( !done ){
             vector<pair<pt,pair<pt,pt>>> found;
             for_each( interpolated_points.begin(), interpolated_points.end(),
                       [&current_edge,&found](auto value){
@@ -831,21 +827,28 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             // We joined one side, we want to join the other side next
             current_edge = ( current_edge == best_pt.second.first ) ? best_pt.second.second : best_pt.second.first;
             interpolated_points.erase(best_pt.first);
+
             if( current_edge == last_edge ){
                 cout << "Finished Building Polygon" << endl;
-                connected = true;
+                done = true;
             }
         }
-        polygons.push_back(poly);
+        polygons.emplace_back(poly);
     }
-    // The limiting case should be when our step = 1
 
     return polygons;
 }
 
+uint8_t composeBits(uint8_t b, uint8_t b2, uint8_t b3 ){
+    uint8_t pot = b << 1;
+    pot |= b >> 1;
+    b = pot & 0b1001;
+    b |= b2 << 1 | b3 << 2;
+    return b;
+}
+// sp != sq or else arithmetic error, divide by zero
 pt interpolation( pt p, pt q, point_t sp, point_t sq, point_t sigma){
     double alpha = (sigma - sp)/(sq - sp);
-
     return pt( (1-alpha)*p.x + alpha*q.x, (1-alpha)*p.y + alpha*q.y );
 }
 
@@ -889,13 +892,6 @@ void binaryGray( Bitmap &o, const uint32_t isovalue){
     grayscale(o);
     transform(o.getBits().begin(), o.getBits().end(),o.getBits().begin(),
               [&isovalue](auto value){return value > isovalue ? 255 : 0;});
-}
-uint8_t composeBits( uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4 ){
-    // cells are  flattened, going from top left to bottom left clockwise
-    // Walk around the cell from top left to bottom left, using bitwise OR and
-    // left-shift
-
-    return (b1 << 3) | (b2 << 2) | (b3 << 1) | b4;
 }
 
 /*
