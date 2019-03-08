@@ -634,17 +634,26 @@ void contours(Bitmap&o){
 //        }
 //    }
 
-    process_cont = cont;
-    vector<vector<pt>> hulls;
-    for( auto& i: process_cont ){
-        if(i.size() > 3 )
-        hulls.push_back(grahamScan(i));
-    }
-    for( auto& i: hulls){
-        for(auto& j: i){
-            draw( o, j.x, j.y, 0xFF00FF, 4);
-        }
-    }
+      process_cont = cont;
+      vector<vector<pt>> hulls;
+      for( auto& i: process_cont ){
+          if(i.size() > 3 )
+          hulls.push_back(grahamScan(i));
+      }
+      
+      for( auto& i: hulls){
+          for(auto& j: i){
+              draw( o, j.x, j.y, 0xFF00FF, 4);
+          }
+      }
+      
+      //bao trying
+      for(auto & hull:hulls){
+	      for(size_t p = 0; p < hull.size()-1; ++p){
+		drawLine(o, hull[p], hull[p+1],0xFF22FF,2);
+	      }
+		drawLine(o, hull.front(), hull.back(),0xFF22FF,2);
+      }
 
     int count = 0;
     uint32_t color = 0xFF0000;
@@ -857,6 +866,33 @@ void draw(Bitmap&o, uint32_t x, uint32_t y, uint32_t color, uint32_t thickness )
             o.b(x+i,y+j) = (color & 0x0000FF);
         }
     }
+}
+
+void drawLine(Bitmap & o, const pt & p1, const pt & p2, uint32_t color, uint32_t thickness){
+	point_t delta_x, delta_y;
+
+	if(p1.x != p2.x){	
+		pt lp = p1.x < p2.x? p1:p2;
+		pt rp = p1.x < p2.x? p2:p1;
+
+		for(uint32_t i = lp.x; i <= rp.x; ++i){
+			delta_x = i - lp.x;
+			delta_y = delta_x * (rp.y - lp.y) / (rp.x - lp.x);
+
+			draw(o, lp.x + delta_x, lp.y + delta_y, color, thickness);
+		}
+	}
+	else{
+		pt bp = p1.y < p2.y? p1:p2;
+		pt tp = p1.y < p2.y? p2:p1;
+
+		for(uint32_t i = bp.y; i <= tp.y; ++i){
+			draw(o, bp.x, i, color, thickness);
+		}
+	}
+
+
+
 }
 
 void binaryGray( Bitmap &o, const uint32_t isovalue){
