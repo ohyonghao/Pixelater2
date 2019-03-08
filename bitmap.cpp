@@ -699,7 +699,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
     for( uint32_t j = 0; j < h-step; j+=step )
     {
-        // Set the bits in 2,3
+        // Set the bits in 2 and 3 as the next step will move them to the correct 1 and 4 position
         uint8_t ot = *(rb-steps) <<2 | *(rb-steps) << 1;
 
         for( uint32_t i = 0; i < w-step; i+=step )
@@ -839,12 +839,10 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     return polygons;
 }
 
-uint8_t composeBits(uint8_t b, uint8_t b2, uint8_t b3 ){
-    uint8_t pot = b << 1;
-    pot |= b >> 1;
-    b = pot & 0b1001;
-    b |= b2 << 1 | b3 << 2;
-    return b;
+inline uint8_t composeBits(uint8_t b, uint8_t b2, uint8_t b3 ){
+    // This maps 2,3 to 1,4, then sets 2, 3 to new bits
+    // This allows us to march forward with only two iterators
+    return ( (b << 1 | b >> 1) & 0b1001 ) | b2 << 1 | b3 << 2;
 }
 // sp != sq or else arithmetic error, divide by zero
 pt interpolation( pt p, pt q, point_t sp, point_t sq, point_t sigma){

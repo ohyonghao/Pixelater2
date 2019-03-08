@@ -122,8 +122,8 @@ private:
     uint32_t maskToInt( uint32_t )noexcept;
 
     // Returns single pixel/color
-    inline uint8_t& getPixel( int x, int y, uint32_t mask );
-    inline const uint8_t& getPixel( int x, int y, uint32_t mask )const;
+    uint8_t& getPixel( int x, int y, uint32_t mask );
+    const uint8_t& getPixel( int x, int y, uint32_t mask )const;
 
     vector<uint8_t>  bits;
 public:
