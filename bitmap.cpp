@@ -697,17 +697,14 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
 
     uint8_t ot = 0;
 
-    vector<vector<uint32_t> > ots;
     // Got it all into one statement without conditionals :-D
     uint32_t leap = bpp*(w*(step-1)+w%step + !(w%step)*step);
 
     for( uint32_t j = 0; j < h-step; j+=step )
     {
-        ots.emplace_back(w/step);
         for( uint32_t i = 0; i < w-step; i+=step )
         {
-            ot = composeBits({*lt, *rt, *rb, *lb});
-            ots[j/step][i/step] = ot;
+            ot = composeBits(*lt, *rt, *rb, *lb);
             if(ot != 0 && ot != 15){
                 // Use *ot to add to pt
                 auto vs = edges(ot); // our v's
@@ -752,12 +749,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         lt+=leap; rt+=leap; lb+=leap; rb+=leap;
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
-    }
-    for( auto j: ots ){
-        for(auto i: j){
-            cout << setw(3) << i << " ";
-        }
-        cout << endl;
     }
     cout << "Point Size: " << points.size() << endl;
     // Now that we have our composed vector we can construct our single set of points to
@@ -899,16 +890,12 @@ void binaryGray( Bitmap &o, const uint32_t isovalue){
     transform(o.getBits().begin(), o.getBits().end(),o.getBits().begin(),
               [&isovalue](auto value){return value > isovalue ? 255 : 0;});
 }
-uint8_t composeBits( const vector<uint32_t> cell ){
+uint8_t composeBits( uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4 ){
     // cells are  flattened, going from top left to bottom left clockwise
     // Walk around the cell from top left to bottom left, using bitwise OR and
     // left-shift
-    uint8_t value = 0;
-    for(auto i: cell){
-        value <<= 1;
-        value |= i;
-    }
-    return value;
+
+    return (b1 << 3) | (b2 << 2) | (b3 << 1) | b4;
 }
 
 /*
