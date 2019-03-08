@@ -620,8 +620,8 @@ void scaleDown(Bitmap& o ) {
 void contours(Bitmap&o){
     Bitmap b(o);
     grayscale(b);
-    binaryGray(o, ISOVALUE);
-    auto cont = findContours(b,5);
+    //binaryGray(o, ISOVALUE);
+    auto cont = findContours(b,3);
 
     auto process_cont{cont};
 //    vector<vector<pt>> jm;
@@ -638,7 +638,7 @@ void contours(Bitmap&o){
       vector<vector<pt>> hulls;
       for( auto& i: process_cont ){
           if(i.size() > 3 )
-          hulls.push_back(grahamScan(i));
+            hulls.push_back(grahamScan(i));
       }
       
       for( auto& i: hulls){
@@ -649,6 +649,8 @@ void contours(Bitmap&o){
       
       //bao trying
       for(auto & hull:hulls){
+          if( hull.empty() )
+              continue;
 	      for(size_t p = 0; p < hull.size()-1; ++p){
 		drawLine(o, hull[p], hull[p+1],0xFF22FF,2);
 	      }
@@ -890,9 +892,6 @@ void drawLine(Bitmap & o, const pt & p1, const pt & p2, uint32_t color, uint32_t
 			draw(o, bp.x, i, color, thickness);
 		}
 	}
-
-
-
 }
 
 void binaryGray( Bitmap &o, const uint32_t isovalue){
@@ -923,105 +922,63 @@ uint8_t composeBits( const vector<uint32_t> cell ){
 vector<pair<edge,edge>> edges( uint8_t square ){
     vector<pair<edge,edge>> sides;
     switch( square ){
-    /* ******************
-     * Bottom, Left
-     * +==+
-     * |  |
-     * -==+
-     *******************/
-    case 1:
-    case 14:
-        sides = { make_pair( edge( pt(0,0),pt(0,1) ),
+    case 1:                                             /* ******************/
+    case 14:                                            // Bottom, Left
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),   // +==+
+                             edge( pt(0,0),pt(1,0) )    // |  |
+                           )                            // -==+
+                };                                      /* ******************/
+        break;
+
+    case 2:                                             /* ******************/
+    case 13:                                            //  Bottom, Right
+        sides = { make_pair( edge( pt(0,0),pt(1,0) ),   // +==+
+                             edge( pt(1,0),pt(1,1) )    // |  |
+                           )                            // +==-
+                };                                      /* ******************/
+        break;
+
+    case 3:                                             /* ******************/
+    case 12:                                            // Left, Right
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),   // +==+
+                             edge( pt(1,0),pt(1,1) )    // |  |
+                           )                            // -==-
+                };                                      /* ******************/
+        break;
+
+    case 4:                                             /* ******************/
+    case 11:                                            // Top, Right
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-
+                             edge( pt(1,0),pt(1,1) )    // |  |
+                           )                            // +==+
+                };                                      /* ******************/
+        break;
+
+    case 5:                                             /* ******************/
+    case 10:                                            // {Top, Right}, {Bottom, Left}
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // -==+
+                             edge( pt(1,1),pt(1,0) )    // |  |
+                           ),                           // +==-
+                  make_pair( edge( pt(0,0),pt(0,1) ),   /* ******************/
                              edge( pt(0,0),pt(1,0) )
                            )
                 };
         break;
 
-    /* ******************
-     *  Bottom, Right
-     * +==+
-     * |  |
-     * +==-
-     *******************/
-    case 2:
-    case 13:
-        sides = { make_pair( edge( pt(0,0),pt(1,0) ),
-                             edge( pt(1,0),pt(1,1) )
-                           )
-                };
+    case 6:                                             /* *******************/
+    case 9:                                             // {Top, Bottom}
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-
+                             edge( pt(0,0),pt(1,0) )    // |  |
+                           )                            // +==-
+                };                                      /* *******************/
         break;
 
-    /* ******************
-     * Left, Right
-     * +==+
-     * |  |
-     * -==-
-     *******************/
-    case 3:
-    case 12:
-        sides = { make_pair( edge( pt(0,0),pt(0,1) ),
-                             edge( pt(1,0),pt(1,1) )
-                           )
-                };
-        break;
-
-    /* ******************
-     * Top, Right
-     * +==-
-     * |  |
-     * +==+
-     *******************/
-    case 4:
-    case 11:
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
-                             edge( pt(1,0),pt(1,1) )
-                           )
-                };
-        break;
-
-    /* ******************
-     * {Top, Right}, {Bottom, Left}
-     * -==+
-     * |  |
-     * +==-
-     ********************/
-    case 5:
-    case 10:
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
-                             edge( pt(1,1),pt(1,0) )
-                           ),
-                  make_pair( edge( pt(0,0),pt(0,1) ),
-                             edge( pt(0,0),pt(1,0) )
-                           )
-                };
-        break;
-
-    /* *******************
-     * {Top, Bottom}
-     * +==-
-     * |  |
-     * +==-
-     *********************/
-    case 6:
-    case 9:
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
-                             edge( pt(0,0),pt(1,0) )
-                           )
-                };
-        break;
-
-    /* ********************
-     * {Top, Left}
-     * +==-
-     * |  |
-     * -==-
-     **********************/
-    case 7:
-    case 8:
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),
-                             edge( pt(0,0),pt(0,1) )
-                           )
-                };
+    case 7:                                             /* ********************/
+    case 8:                                             // {Top, Left}        */
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-
+                             edge( pt(0,0),pt(0,1) )    // |  |
+                           )                            // -==-
+                };                                      /* *********************/
         break;
     /* **********************
      * None
