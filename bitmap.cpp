@@ -46,12 +46,12 @@ istream& operator>>(istream& in, Bitmap& bitmap) {
     // We have enough information to set aside the memory needed to load the rest
     // of the image
 
-    b.Bpp = b.dibs.cDepth>>3;
-    b.rowSize = ( ( b.dibs.cDepth * b.dibs.width + 31 ) / 32 ) * 4;
+    b._bpp = b.dibs.cDepth>>3;
+    b._rowSize = ( ( b.dibs.cDepth * b.dibs.width + 31 ) / 32 ) * 4;
 
-    b.bits.resize(b.dibs.rawSize);
+    b._bits.resize(b.dibs.rawSize);
 
-    in.read(reinterpret_cast<char*>(b.bits.data()), b.dibs.rawSize);
+    in.read(reinterpret_cast<char*>(b._bits.data()), b.dibs.rawSize);
     // If nothings gone wrong, swap it out
     swap(bitmap, move(b));
 
@@ -71,7 +71,7 @@ ostream& operator<<(ostream& out, const Bitmap& b) {
         out.write( reinterpret_cast<const char*>(&b.colorspace), sizeof(b.colorspace));
 
     // Then body
-    out.write( reinterpret_cast<const char*>(b.bits.data()), b.bits.size());
+    out.write( reinterpret_cast<const char*>(b._bits.data()), b._bits.size());
     return out;
 }
 
@@ -88,10 +88,10 @@ void swap( Bitmap &lhs, Bitmap &&rhs ){
     lhs.g_mask      = move(rhs.g_mask);
     lhs.b_mask      = move(rhs.b_mask);
     lhs.a_mask      = move(rhs.a_mask);
-    lhs.rowSize     = move(rhs.rowSize);
-    lhs.rowWidth    = move(rhs.rowWidth);
-    lhs.Bpp         = move(rhs.Bpp);
-    lhs.bits        = move(rhs.bits);
+    lhs._rowSize     = move(rhs._rowSize);
+    lhs._rowWidth    = move(rhs._rowWidth);
+    lhs._bpp         = move(rhs._bpp);
+    lhs._bits        = move(rhs._bits);
 }
 
 /*
@@ -107,15 +107,15 @@ r_mask{rhs.r_mask},
 g_mask{rhs.g_mask},
 b_mask{rhs.b_mask},
 a_mask{rhs.a_mask},
-rowSize{rhs.rowSize},
-rowWidth{rhs.rowWidth},
-Bpp{rhs.Bpp},
-bits{}
+_rowSize{rhs._rowSize},
+_rowWidth{rhs._rowWidth},
+_bpp{rhs._bpp},
+_bits{}
 {
     if( noData ){
-        bits.resize(rhs.bits.size()); // Set the size only
+        _bits.resize(rhs._bits.size()); // Set the size only
     }else{
-        bits = rhs.bits;
+        _bits = rhs._bits;
     }
 }
 
@@ -183,7 +183,7 @@ inline const uint8_t& Bitmap::getPixel(int x, int y, uint32_t mask) const{
         throw OutOfBoundsException();
     if( dibs.height < 0 )
         y = (-dibs.height) - y;
-    return bits[ y*rowSize + (x*Bpp) + mask ];
+    return _bits[ y*_rowSize + (x*_bpp) + mask ];
 }
 /*
  * Takes a value and returns either the low or high depending on whether it is above the threshold or not [0x00,0x54)
@@ -216,6 +216,7 @@ void cellShade(Bitmap& b)noexcept{
  * which give a more realistic grayscale than averaging.
  */
 void grayscale(Bitmap& b ) {
+
     for( int j = 0; j < b.height(); ++j ){
         for( int i = 0; i < b.width(); ++i ){
             // Now gray scale it using the formula
@@ -226,7 +227,6 @@ void grayscale(Bitmap& b ) {
             uint8_t &gv = b.g(i,j);
             uint8_t &bv = b.b(i,j);
             uint8_t y = 0.216*rv + 0.7152*gv + 0.0722*bv; // Wikipedia
-            //double y = 0.2989*rv + 0.5870*gv + 0.1140*bv; // Matlab
             rv = y;
             gv = y;
             bv = y;
@@ -298,18 +298,6 @@ void blur(Bitmap& b ) {
 }
 
 /*
- * Takes a flattened matrix and returns the average
- * return average of all elements
- */
-uint32_t matrixAverage( const vector<uint32_t>& rhs )noexcept{
-    uint32_t sum = 0;
-    for( auto v: rhs ){
-        sum += v;
-    }
-    return rhs.empty() ? sum : sum / rhs.size();
-}
-
-/*
  * Performs a pixalation operation over entire image
  */ 
 void pixelate(Bitmap& b) {
@@ -360,12 +348,6 @@ void Bitmap::setDimension( int32_t width, int32_t height ){
     // set new size for bmp
     // set width and height
     // resize internal representation to match padding CORRUPTS DATA!!
-    // TODO: to not corrupt we would need to remove padding from middle (not great for vectors)
-    // then add it to wherever it should be. Of course, there is no way to know really how the user
-    // would want us to handle the setDimension, black in empty spots? Cropping sides that no longer fit
-    // Really, should only be used when you will be setting data in, such as when doing a rotation.
-
-    // We'll handle 32bit first then work on 24bit
 
     // Copy DIBS
     DIBs _d(dibs);
@@ -384,12 +366,12 @@ void Bitmap::setDimension( int32_t width, int32_t height ){
     _d.rawSize = _rowSize * ( _d.height < 0 ? -_d.height: _d.height );
 
     // Reset internal rpresentation
-    if( bits.size() != _d.rawSize )
-        bits.resize( _d.rawSize );
+    if( _bits.size() != _d.rawSize )
+        _bits.resize( _d.rawSize );
 
     // If no exceptions we can now copy everything over
     this->dibs      = _d;
-    this->rowSize   = _rowSize;
+    this->_rowSize   = _rowSize;
     this->header.size = _d.rawSize + header.offset;
 
 }
@@ -619,9 +601,7 @@ void scaleDown(Bitmap& o ) {
 // Here's what drives our function
 void contours(Bitmap&o){
     Bitmap b(o);
-    grayscale(b);
-    //binaryGray(o, ISOVALUE);
-    auto cont = findContours(b,3);
+    auto cont = findContours(b,5);
 
     auto process_cont{cont};
 //    vector<vector<pt>> jm;
@@ -649,8 +629,10 @@ void contours(Bitmap&o){
       
       //bao trying
       for(auto & hull:hulls){
-          if( hull.empty() )
+          if( hull.empty() ) // happens when polygon is colinier
+          {
               continue;
+          }
 	      for(size_t p = 0; p < hull.size()-1; ++p){
 		drawLine(o, hull[p], hull[p+1],0xFF22FF,2);
 	      }
@@ -662,7 +644,7 @@ void contours(Bitmap&o){
     for( auto& i: cont){
         for(auto& j: i){
             ++count;
-            draw( o, j.x, j.y, color, 2);
+            draw( o, j.x, j.y, color, o.width()/1000 + 2);
         }
         color += 0x101123;
     }
@@ -709,12 +691,17 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             if(ot != 0 && ot != 15){
                 // Use *ot to add to pt
                 auto vs = edges(ot); // our v's
-                auto v = vs.front();  // our first v, but in case of disambiuation we'll do something to it
+                auto v = vs.front();
                 if( vs.size() > 1 ){
                     // Do something with these because of ambiguous case
-                    // One method is to check the previous one, then do the opposite
-                    // If N ? E : W
-                    // If E ? N : S
+                    // Or just ignore it and be consistent in always choosing the first.
+                    // Form Isosurfaces (by Rephael Wenger)
+                    /*
+                     * While the choice of isocontours for the ambiguous configurations change the
+                     * isocontour topology, any of the choices will produce isocntours that are
+                     * 1-manifolds and strictly separate strictly positive vertices from  negative
+                     * vertices.
+                     */
                 }
                 // map edges into square space from unit square space
                 // v.first == v, v.second == v'
@@ -737,10 +724,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             }
             rt+=steps;
             rb+=steps;
-            if( rt > b.getBits().end() ){
-                cout << "We should never get here." << endl;
-            }
-            // As long as there is no padding this should be good
         }
         rt+=leap;
         rb+=leap;

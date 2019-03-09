@@ -111,12 +111,18 @@ private:
     uint32_t a_mask = 0;
 
     
-    uint32_t rowSize = 0;   // Row Size in Bytes
-    uint32_t rowWidth = 0;  // Row Width in Pixels including padding
-    uint32_t  Bpp     = 0;   // Bytes per pixel
+    uint32_t _rowSize  = 0;   // Row Size in Bytes
+    uint32_t _rowWidth = 0;  // Row Width in Pixels including padding
+    uint32_t _bpp      = 0;   // Bytes per pixel
+    uint32_t _padding  = 0;
 
+    // This is where we store everything
+    vector<uint8_t>  _bits;
+
+    // Helper private functions
     // Uses info in colorspace to init masks
     void setmask( );
+    uint32_t padding();
 
     // Returns the position in the mask where a mask is a disjoint set of bitshifted 0xFF values
     uint32_t maskToInt( uint32_t )noexcept;
@@ -125,7 +131,6 @@ private:
     uint8_t& getPixel( int x, int y, uint32_t mask );
     const uint8_t& getPixel( int x, int y, uint32_t mask )const;
 
-    vector<uint8_t>  bits;
 public:
     Bitmap() = default;
     Bitmap(const Bitmap&, bool noData = false);
@@ -133,34 +138,34 @@ public:
     Bitmap(Bitmap&&) = default;
     //~Bitmap();
 
-    inline uint8_t& r( int x, int y ){ return getPixel( x, y, r_mask ); }
-    inline uint8_t& g( int x, int y ){ return getPixel( x, y, g_mask ); }
-    inline uint8_t& b( int x, int y ){ return getPixel( x, y, b_mask ); }
-    inline uint8_t& a( int x, int y ){ return getPixel( x, y, a_mask ); }
+    uint8_t& r( int x, int y ){ return getPixel( x, y, r_mask ); }
+    uint8_t& g( int x, int y ){ return getPixel( x, y, g_mask ); }
+    uint8_t& b( int x, int y ){ return getPixel( x, y, b_mask ); }
+    uint8_t& a( int x, int y ){ return getPixel( x, y, a_mask ); }
 
-    inline uint8_t& r( pt& p ){ return getPixel( p.x, p.y, r_mask ); }
-    inline uint8_t& g( pt& p ){ return getPixel( p.x, p.y, g_mask ); }
-    inline uint8_t& b( pt& p ){ return getPixel( p.x, p.y, b_mask ); }
-    inline uint8_t& a( pt& p ){ return getPixel( p.x, p.y, a_mask ); }
+    uint8_t& r( pt& p ){ return getPixel( p.x, p.y, r_mask ); }
+    uint8_t& g( pt& p ){ return getPixel( p.x, p.y, g_mask ); }
+    uint8_t& b( pt& p ){ return getPixel( p.x, p.y, b_mask ); }
+    uint8_t& a( pt& p ){ return getPixel( p.x, p.y, a_mask ); }
 
     const uint8_t& r( pt& p )const{ return getPixel( p.x, p.y, r_mask ); }
     const uint8_t& g( pt& p )const{ return getPixel( p.x, p.y, g_mask ); }
     const uint8_t& b( pt& p )const{ return getPixel( p.x, p.y, b_mask ); }
     const uint8_t& a( pt& p )const{ return getPixel( p.x, p.y, a_mask ); }
 
-    inline int32_t  height() const{ return dibs.height < 0 ? -dibs.height: dibs.height ; }
-    inline int32_t  width() const{ return dibs.width; }
-    inline void     setHeight( int32_t height ){ setDimension( dibs.width, height); }
-    inline void     setWidth( int32_t width ){ setDimension( width, dibs.height); }
-    inline uint32_t rmask() const{ return r_mask; }
-    inline uint32_t gmask() const{ return g_mask; }
-    inline uint32_t bmask() const{ return b_mask; }
-    inline uint32_t amask() const{ return a_mask; }
-    inline bool     hasAlpha() const{ return dibs.cmpsn; }
+    int32_t  height() const{ return dibs.height < 0 ? -dibs.height: dibs.height ; }
+    int32_t  width() const{ return dibs.width; }
+    void     setHeight( int32_t height ){ setDimension( dibs.width, height); }
+    void     setWidth( int32_t width ){ setDimension( width, dibs.height); }
+    uint32_t rmask() const{ return r_mask; }
+    uint32_t gmask() const{ return g_mask; }
+    uint32_t bmask() const{ return b_mask; }
+    uint32_t amask() const{ return a_mask; }
+    bool     hasAlpha() const{ return dibs.cmpsn; }
 
-    auto& getBits(){return bits;}
-    const auto& getBits()const{return bits;}
-    auto bpp(){ return Bpp;}
+    auto& getBits(){return _bits;}
+    const auto& getBits()const{return _bits;}
+    auto bpp(){ return _bpp;}
     // This function sets the internal dimensions of the bitmap, and in doing so
     // it takes no regards for the image that was in it and should be considered
     // corrucpted.
@@ -213,9 +218,16 @@ void flipd2(Bitmap& b);
 void scaleUp(Bitmap& b);
 void scaleDown(Bitmap& b);
 
+void contours(Bitmap& b);
+
 // Final Functions
 
-void binaryGray( Bitmap &, const uint32_t isovalue);
+/*!
+ * \brief binaryGray
+ * \param image is the canvas to be changed to binary gray
+ * \param isovalue the grayscale value to split between negative and positive (0, 1)
+ */
+void binaryGray( Bitmap &image, const uint32_t isovalue);
 /*!
  * \brief findContours returns a vector of vectors of points, that is to say that
  *        each vector is a set of points that should form a completed contour
@@ -223,16 +235,25 @@ void binaryGray( Bitmap &, const uint32_t isovalue);
  * \return vector of sets of points that create a completed contour shape
  */
 vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
+/*!
+ * \brief edges lookup table for 2^4 edge possibilities
+ * \param square a binary value with positions 0,1,2,3 being the corners of a square from
+ * the marching squares algorithm. lb, rb, rt, lt with lt being the most significant.
+ * \return a vector of edge pairs from the table
+ */
 vector<pair<edge,edge>> edges( uint8_t square );
+/*!
+ * \brief composeBits
+ * \param b the previous corner
+ * \param b2 the new corner 2 after one step
+ * \param b3 the new corner 3 after one step
+ * \return previous corners 2, 3 moved to 1,4, and new corners 2,3 inserted in.
+ */
 uint8_t composeBits(uint8_t b, uint8_t b2, uint8_t b3 );
 pt interpolation(pt p, pt q, point_t sp , point_t sq, point_t sigma);
 
+// Drawing functions
 void draw(Bitmap&o, uint32_t x, uint32_t y , uint32_t color, uint32_t thickness = 10);
-//void draw(Bitmap&o, uint32_t color, pair<uint32_t,uint32_t> coord)
-//{draw(o, coord.first, coord.second, color );}
-
 void drawLine(Bitmap & o, const pt & p1, const pt & p2, uint32_t color, uint32_t thickness);
-
-void contours(Bitmap& b);
 
 #endif // MY_BITMAP_H_
