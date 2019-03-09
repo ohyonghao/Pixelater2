@@ -758,13 +758,13 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         vector<pt> poly = {};
 
         // Put the point into our polygon
-        // Go to first (ignore second for now)
         // 1. Find a point that shares the first edge
         // 2. Place point in bag, remove shared edge, check for next edge
         // 3. ...
         // 4. Profit!!
         // 5. If next edge == current.second, then stop
 
+        // Prime the pump
         // Get the first element by iterator since this is a map
         // For a map it->first == key, it->second == value
         auto it = interpolated_points.begin();
@@ -831,7 +831,7 @@ inline uint8_t composeBits(uint8_t b, uint8_t b2, uint8_t b3 ){
     return ( (b << 1 | b >> 1) & 0b1001 ) | b2 << 1 | b3 << 2;
 }
 // sp != sq or else arithmetic error, divide by zero
-pt interpolation( pt p, pt q, point_t sp, point_t sq, point_t sigma){
+inline pt interpolation( pt p, pt q, point_t sp, point_t sq, point_t sigma){
     double alpha = (sigma - sp)/(sq - sp);
     return pt( (1-alpha)*p.x + alpha*q.x, (1-alpha)*p.y + alpha*q.y );
 }
@@ -889,62 +889,62 @@ void binaryGray( Bitmap &o, const uint32_t isovalue){
 vector<pair<edge,edge>> edges( uint8_t square ){
     vector<pair<edge,edge>> sides;
     switch( square ){
-    case 1:                                             /* ******************/
-    case 14:                                            // Bottom, Left
-        sides = { make_pair( edge( pt(0,0),pt(0,1) ),   // +==+
-                             edge( pt(0,0),pt(1,0) )    // |  |
-                           )                            // -==+
-                };                                      /* ******************/
+    case 1:                                             /* ********************/
+    case 14:                                            // Bottom, Left       */
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),   // +==+               */
+                             edge( pt(0,0),pt(1,0) )    // |  |               */
+                           )                            // -==+               */
+                };                                      /* ********************/
         break;
 
-    case 2:                                             /* ******************/
-    case 13:                                            //  Bottom, Right
-        sides = { make_pair( edge( pt(0,0),pt(1,0) ),   // +==+
-                             edge( pt(1,0),pt(1,1) )    // |  |
-                           )                            // +==-
-                };                                      /* ******************/
+    case 2:                                             /* ********************/
+    case 13:                                            //  Bottom, Right     */
+        sides = { make_pair( edge( pt(0,0),pt(1,0) ),   // +==+               */
+                             edge( pt(1,0),pt(1,1) )    // |  |               */
+                           )                            // +==-               */
+                };                                      /* ********************/
         break;
 
-    case 3:                                             /* ******************/
-    case 12:                                            // Left, Right
-        sides = { make_pair( edge( pt(0,0),pt(0,1) ),   // +==+
-                             edge( pt(1,0),pt(1,1) )    // |  |
-                           )                            // -==-
-                };                                      /* ******************/
+    case 3:                                             /* ********************/
+    case 12:                                            // Left, Right        */
+        sides = { make_pair( edge( pt(0,0),pt(0,1) ),   // +==+               */
+                             edge( pt(1,0),pt(1,1) )    // |  |               */
+                           )                            // -==-               */
+                };                                      /* ********************/
         break;
 
-    case 4:                                             /* ******************/
-    case 11:                                            // Top, Right
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-
-                             edge( pt(1,0),pt(1,1) )    // |  |
-                           )                            // +==+
-                };                                      /* ******************/
+    case 4:                                             /* ********************/
+    case 11:                                            // Top, Right         */
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-               */
+                             edge( pt(1,0),pt(1,1) )    // |  |               */
+                           )                            // +==+               */
+                };                                      /* ********************/
         break;
 
-    case 5:                                             /* ******************/
-    case 10:                                            // {Top, Right}, {Bottom, Left}
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // -==+
-                             edge( pt(1,1),pt(1,0) )    // |  |
-                           ),                           // +==-
-                  make_pair( edge( pt(0,0),pt(0,1) ),   /* ******************/
+    case 5:                                             /* ******************************/
+    case 10:                                            // {Top, Right}, {Bottom, Left} */
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // -==+                         */
+                             edge( pt(1,1),pt(1,0) )    // |  |                         */
+                           ),                           // +==-                         */
+                  make_pair( edge( pt(0,0),pt(0,1) ),   /* ******************************/
                              edge( pt(0,0),pt(1,0) )
                            )
                 };
         break;
 
-    case 6:                                             /* *******************/
-    case 9:                                             // {Top, Bottom}
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-
-                             edge( pt(0,0),pt(1,0) )    // |  |
-                           )                            // +==-
-                };                                      /* *******************/
+    case 6:                                             /* ********************/
+    case 9:                                             // {Top, Bottom}      */
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-               */
+                             edge( pt(0,0),pt(1,0) )    // |  |               */
+                           )                            // +==-               */
+                };                                      /* ********************/
         break;
 
     case 7:                                             /* ********************/
     case 8:                                             // {Top, Left}        */
-        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-
-                             edge( pt(0,0),pt(0,1) )    // |  |
-                           )                            // -==-
+        sides = { make_pair( edge( pt(0,1),pt(1,1) ),   // +==-               */
+                             edge( pt(0,0),pt(0,1) )    // |  |               */
+                           )                            // -==-               */
                 };                                      /* *********************/
         break;
     /* **********************
