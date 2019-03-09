@@ -111,10 +111,9 @@ private:
     uint32_t a_mask = 0;
 
     
-    uint32_t _rowSize  = 0;   // Row Size in Bytes
+    uint32_t _rowSize  = 0;  // Row Size in Bytes
     uint32_t _rowWidth = 0;  // Row Width in Pixels including padding
-    uint32_t _bpp      = 0;   // Bytes per pixel
-    uint32_t _padding  = 0;
+    uint32_t _bpp      = 0;  // Bytes per pixel
 
     // This is where we store everything
     vector<uint8_t>  _bits;
@@ -122,7 +121,6 @@ private:
     // Helper private functions
     // Uses info in colorspace to init masks
     void setmask( );
-    uint32_t padding();
 
     // Returns the position in the mask where a mask is a disjoint set of bitshifted 0xFF values
     uint32_t maskToInt( uint32_t )noexcept;
@@ -162,6 +160,7 @@ public:
     uint32_t bmask() const{ return b_mask; }
     uint32_t amask() const{ return a_mask; }
     bool     hasAlpha() const{ return dibs.cmpsn; }
+    uint32_t padding(){return _rowWidth-_rowSize;}
 
     auto& getBits(){return _bits;}
     const auto& getBits()const{return _bits;}

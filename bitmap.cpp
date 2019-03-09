@@ -47,7 +47,8 @@ istream& operator>>(istream& in, Bitmap& bitmap) {
     // of the image
 
     b._bpp = b.dibs.cDepth>>3;
-    b._rowSize = ( ( b.dibs.cDepth * b.dibs.width + 31 ) / 32 ) * 4;
+    b._rowSize = b._bpp*b.dibs.width;
+    b._rowWidth = ( ( b.dibs.cDepth * b.dibs.width + 31 ) >> 5 ) << 2;
 
     b._bits.resize(b.dibs.rawSize);
 
@@ -183,12 +184,12 @@ inline const uint8_t& Bitmap::getPixel(int x, int y, uint32_t mask) const{
         throw OutOfBoundsException();
     if( dibs.height < 0 )
         y = (-dibs.height) - y;
-    return _bits[ y*_rowSize + (x*_bpp) + mask ];
+    return _bits[ y*_rowWidth + (x*_bpp) + mask ];
 }
 /*
  * Takes a value and returns either the low or high depending on whether it is above the threshold or not [0x00,0x54)
  */
-uint8_t clip( uint8_t value )noexcept{
+inline uint8_t clip( uint8_t value )noexcept{
     return (value < 0x40 ? 0x00 : (value < 0xC0 ? 0x80 : 0xFF ) );
 }
 
@@ -360,10 +361,11 @@ void Bitmap::setDimension( int32_t width, int32_t height ){
     _d.width = width;
 
     // Calculate RowSize
-    uint32_t _rowSize   = ((_d.cDepth * _d.width + 31 ) >> 5 ) << 2;
+    uint32_t rowWidth   = ((_d.cDepth * _d.width + 31 ) >> 5 ) << 2;
+    uint32_t rowSize    = _d.cDepth * _d.width;
 
     // Calculate new size
-    _d.rawSize = _rowSize * ( _d.height < 0 ? -_d.height: _d.height );
+    _d.rawSize = rowWidth * ( _d.height < 0 ? -_d.height: _d.height );
 
     // Reset internal rpresentation
     if( _bits.size() != _d.rawSize )
@@ -371,7 +373,8 @@ void Bitmap::setDimension( int32_t width, int32_t height ){
 
     // If no exceptions we can now copy everything over
     this->dibs      = _d;
-    this->_rowSize   = _rowSize;
+    this->_rowSize   = rowSize;
+    this->_rowWidth  = rowWidth;
     this->header.size = _d.rawSize + header.offset;
 
 }
@@ -674,15 +677,15 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
     // The four corners march fourth on their horses towards the apocalypse
 
     auto rb = b.getBits().begin()+b.rmask()+steps;
-    auto rt = rb+w*steps;
+    auto rt = rb+w*steps + b.padding()*step;
 
     // Got it all into one statement without conditionals :-D
-    uint32_t leap = bpp*(w*(step-1)+w%step + !(w%step)*step);
+    uint32_t leap = bpp*(w*(step-1)+w%step + !(w%step)*step)+b.padding()*(step);
 
     for( uint32_t j = 0; j < h-step; j+=step )
     {
         // Set the bits in 2 and 3 as the next step will move them to the correct 1 and 4 position
-        uint8_t ot = *(rb-steps) <<2 | *(rb-steps) << 1;
+        uint8_t ot = *(rt-steps) << 2 | *(rb-steps) << 1;
 
         for( uint32_t i = 0; i < w-step; i+=step )
         {
