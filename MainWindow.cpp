@@ -14,11 +14,11 @@ MainWindow::MainWindow(QWidget *parent)
     createFilterGroup();
     createSettingsGroup();
 
-    mainlayout = new QHBoxLayout;
+    mainlayout = new QGridLayout;
     mainlayout->setMenuBar(menuBar);
-    mainlayout->addWidget(gbDisplay);
-    mainlayout->addWidget(gbSettings);
-    mainlayout->addWidget(gbFilter);
+    mainlayout->addWidget(gbDisplay,0,0,2,1);
+    mainlayout->addWidget(gbSettings,0,1,1,1);
+    mainlayout->addWidget(gbFilter,0,2,1,1);
 
     ui->setLayout(mainlayout);
     setWindowTitle(tr("Pixelater Qt2000"));
@@ -37,7 +37,7 @@ void MainWindow::createMenu(){
     menuBar->addMenu(fileMenu);
 
     connect(openAction, SIGNAL(triggered()), this, SLOT(openFile()));
-    connect(exitAction, SIGNAL(triggered()), this, SLOT(quit()));
+    connect(exitAction, SIGNAL(triggered()), this, SLOT(exit()));
 }
 
 void MainWindow::createDisplayGroup(){
@@ -47,9 +47,9 @@ void MainWindow::createDisplayGroup(){
     // Image area
     slImage = new QStackedWidget;
     slImage->addWidget(new QWidget);
-
     layout->addWidget(slImage);
     gbDisplay->setLayout(layout);
+    gbDisplay->setMinimumWidth(500);
 }
 
 void MainWindow::createFilterGroup(){
@@ -67,6 +67,7 @@ void MainWindow::createFilterGroup(){
     layout->addWidget(pbGrayFilter);
     layout->addWidget(pbBinFilter);
     layout->addWidget(pbCelShade);
+    layout->addStretch();
 
     layout->setSizeConstraint(QLayout::SetFixedSize);
     gbFilter->setLayout(layout);
@@ -145,12 +146,18 @@ void MainWindow::createSettingsGroup(){
     layout->addWidget(gbSliders);
     layout->addWidget(gbContour);
     layout->addWidget(swShowImage);
+    layout->addStretch();
     layout->setSizeConstraint(QLayout::SetFixedSize);
 
     gbSettings->setLayout(layout);
 
 }
 
+void MainWindow::setLayoutHeight(){
+    if(image){
+        gbDisplay->setMinimumSize(image->size());
+    }
+}
 void MainWindow::openFile(){
     QString fileName = QFileDialog::getOpenFileName(this,
                                             tr("Open Image"),
@@ -163,10 +170,9 @@ void MainWindow::openFile(){
     }
     image = new ImageDisplay(fileName);
     slImage->setCurrentIndex((slImage->addWidget(image)));
-    createImageConnections();
-    // Close old image
-    // Open new image
 
+    createImageConnections();
+    setLayoutHeight();
 }
 
 void MainWindow::updateIsoValue(int value){

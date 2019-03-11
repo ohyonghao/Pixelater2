@@ -32,9 +32,10 @@ private:
     void createFilterGroup();
     void createSettingsGroup();
     void createImageConnections();
+    void setLayoutHeight();
 
     QWidget         *ui;
-    QHBoxLayout     *mainlayout;
+    QGridLayout     *mainlayout;
     QMenuBar        *menuBar;
     QGroupBox       *gbDisplay;
     QGroupBox       *gbFilter;

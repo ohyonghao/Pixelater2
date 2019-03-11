@@ -18,6 +18,8 @@ class ImageDisplay : public QWidget
 public:
     explicit ImageDisplay(QString filename, int isovalue=57, int stepsize = 5, QWidget *parent = nullptr);
     bool succeeded(){ return success;}
+    QSizePolicy sizePolicy(){return imageLabel->sizePolicy();}
+    QSize size(){return imageLabel->size();}
 private:
     void createScene();
     void loadImage();

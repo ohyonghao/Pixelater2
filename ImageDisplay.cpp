@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include <QIODevice>
 #include <QTextStream>
-#include <QDebug>
 #include "bitmap.h"
 
 ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget *parent) : QWidget(parent),
@@ -25,9 +24,7 @@ void ImageDisplay::createScene(){
     loadImage();
 }
 void ImageDisplay::loadImage(){
-
-    qDebug() << tr("Loading Image Parameters: %1, %2").arg(_isovalue).arg(_stepsize);
-    // Load image
+// Load image
     if(displayBinary){
         _bimage = _image;
         binaryGray(_bimage, _isovalue);
