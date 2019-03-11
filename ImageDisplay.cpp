@@ -62,6 +62,11 @@ void ImageDisplay::Blur(){
 void ImageDisplay::Contour(){
     loadImage();
 }
+
+void ImageDisplay::CelShade(){
+    cellShade(_image);
+    loadImage();
+}
 void ImageDisplay::save(){
     std::ofstream of;
     of.open( (QString("image_contour.bmp")).toStdString() );

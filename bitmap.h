@@ -6,6 +6,7 @@
 #include <exception>
 #include <cmath>
 #include "point.hpp"
+#include "BitmapIterator.h"
 /*
 Tasks to do:
 1. Create a Pixel class to hold the argb pixel information, this should be simple
@@ -172,8 +173,24 @@ public:
     // corrucpted.
     void setDimension( int32_t width, int32_t height );
     friend void swap( Bitmap&, Bitmap&& );
-};
 
+    // Iterator Traits
+    typedef uint8_t                                 type;
+    typedef uint8_t                                 value_type;
+    typedef uint8_t*                                pointer;
+    typedef uint8_t&                                reference;
+    typedef size_t                                  size_type;
+    typedef ptrdiff_t                               difference_type;
+    typedef std::bidirectional_iterator_tag         iterator_category;
+    typedef BitmapIterator                          iterator;
+    typedef BitmapIterator                          const_iterator;
+
+    // Iterators
+    iterator begin(){return iterator(this);}
+    iterator end(){return iterator(this,true);}
+    iterator cbegin(){return iterator(this);}
+    iterator cend(){return iterator(this,true);}
+};
 class BadFileTypeException: public exception{
     inline const char * what() const noexcept{
         return "Not Bitmap type";

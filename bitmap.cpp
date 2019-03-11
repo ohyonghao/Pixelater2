@@ -197,18 +197,11 @@ inline uint8_t clip( uint8_t value )noexcept{
  * Peforms a cell (sic) shade operation over the entire image
  */
 void cellShade(Bitmap& b)noexcept{
-    for( int j = 0; j < b.height(); ++j ){
-        for( int i = 0; i < b.width(); ++i ){
-            // How to cel shade
-            // We'll grab each color and clip them.
-            uint8_t &bv = b.b(i,j);
-            uint8_t &gv = b.g(i,j);
-            uint8_t &rv = b.r(i,j);
-            bv = clip( bv );
-            gv = clip( gv );
-            rv = clip( rv );
-        }
-    }
+    for_each(b.begin(),b.end(),[&b](auto& value){
+        *(&value+b.rmask()) = clip(*(&value+b.rmask()) );
+        *(&value+b.gmask()) = clip(*(&value+b.gmask()) );
+        *(&value+b.bmask()) = clip(*(&value+b.bmask()) );
+    });
 }
 
 /*
@@ -217,22 +210,14 @@ void cellShade(Bitmap& b)noexcept{
  * which give a more realistic grayscale than averaging.
  */
 void grayscale(Bitmap& b ) {
-
-    for( int j = 0; j < b.height(); ++j ){
-        for( int i = 0; i < b.width(); ++i ){
-            // Now gray scale it using the formula
-            // Y = 0.216*R + 0.7152*G + 0.0722*B
-            // Hmm, but where to put this
-            // Okay, looks like every color gets the same value
-            uint8_t &rv = b.r(i,j);
-            uint8_t &gv = b.g(i,j);
-            uint8_t &bv = b.b(i,j);
-            uint8_t y = 0.216*rv + 0.7152*gv + 0.0722*bv; // Wikipedia
-            rv = y;
-            gv = y;
-            bv = y;
-        }
-    }
+    for_each(b.begin(),b.end(),[&b](auto& value){
+        uint8_t y = *(&value+b.rmask())*0.216
+                  + *(&value+b.gmask())*0.7152
+                  + *(&value+b.bmask())*0.0722;
+        *(&value+b.rmask()) = y;
+        *(&value+b.gmask()) = y;
+        *(&value+b.bmask()) = y;
+    });
 }
 
 /*
@@ -626,7 +611,7 @@ void contours(Bitmap&o, int isovalues, int stepsize){
       
       for( auto& i: hulls){
           for(auto& j: i){
-              draw( o, j.x, j.y, 0xFF00FF, 4);
+              draw( o, j.x, j.y, 0xFF00FF, o.width()/1000 + 8);
           }
       }
       

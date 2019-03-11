@@ -61,10 +61,12 @@ void MainWindow::createFilterGroup(){
     pbBlurFilter = new QPushButton(tr("Blur"));
     pbGrayFilter = new QPushButton(tr("Grayscale"));
     pbBinFilter  = new QPushButton(tr("Binary Gray"));
+    pbCelShade   = new QPushButton(tr("Cel Shade"));
     layout->addWidget(pbPixFilter);
     layout->addWidget(pbBlurFilter);
     layout->addWidget(pbGrayFilter);
     layout->addWidget(pbBinFilter);
+    layout->addWidget(pbCelShade);
 
     layout->setSizeConstraint(QLayout::SetFixedSize);
     gbFilter->setLayout(layout);
@@ -179,6 +181,8 @@ void MainWindow::createImageConnections(){
     connect(pbBinFilter, &QPushButton::pressed, image, &ImageDisplay::BinaryGray );
     connect(pbPixFilter, &QPushButton::pressed, image, &ImageDisplay::Pixelate );
     connect(pbBlurFilter, &QPushButton::pressed, image, &ImageDisplay::Blur );
+    connect(pbCelShade, &QPushButton::pressed, image, &ImageDisplay::CelShade );
+
     connect(sIsovalue, &QSlider::valueChanged, image, &ImageDisplay::setIsovalue);
     connect(sStepsize, &QSlider::valueChanged, image, &ImageDisplay::setStepSize);
     connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);

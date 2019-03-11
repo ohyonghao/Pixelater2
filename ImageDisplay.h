@@ -49,6 +49,7 @@ public slots:
     void Pixelate();
     void Blur();
     void Contour();
+    void CelShade();
     void setIsovalue(int isovalue){ _isovalue = isovalue; loadImage();}
     void setStepSize(int stepsize){ _stepsize = stepsize; loadImage();}
     void toggleBinary();
