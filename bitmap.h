@@ -22,7 +22,8 @@ using namespace std;
 
 //typedef point<double> fpt;
 
-const uint32_t ISOVALUE = 57;
+const int32_t ISOVALUE = 57;
+const int32_t STEPSIZE = 5;
 class Bitmap
 {
 private:
@@ -132,7 +133,7 @@ private:
 public:
     Bitmap() = default;
     Bitmap(const Bitmap&, bool noData = false);
-    //Bitmap operator=( const Bitmap& rhs ) = default;
+    Bitmap& operator=( const Bitmap& rhs ) = default;
     Bitmap(Bitmap&&) = default;
     //~Bitmap();
 
@@ -153,6 +154,7 @@ public:
 
     int32_t  height() const{ return dibs.height < 0 ? -dibs.height: dibs.height ; }
     int32_t  width() const{ return dibs.width; }
+    uint32_t  rowWidth() const{return _rowWidth; }
     void     setHeight( int32_t height ){ setDimension( dibs.width, height); }
     void     setWidth( int32_t width ){ setDimension( width, dibs.height); }
     uint32_t rmask() const{ return r_mask; }
@@ -217,7 +219,7 @@ void flipd2(Bitmap& b);
 void scaleUp(Bitmap& b);
 void scaleDown(Bitmap& b);
 
-void contours(Bitmap& b);
+void contours(Bitmap& b, int isovalues=ISOVALUE, int stepsize=STEPSIZE);
 
 // Final Functions
 
@@ -233,7 +235,7 @@ void binaryGray( Bitmap &image, const uint32_t isovalue);
  * \param o
  * \return vector of sets of points that create a completed contour shape
  */
-vector<vector<pt>> findContours(const Bitmap& o, uint32_t step);
+vector<vector<pt>> findContours(const Bitmap& o, int32_t isovalue, uint32_t step);
 /*!
  * \brief edges lookup table for 2^4 edge possibilities
  * \param square a binary value with positions 0,1,2,3 being the corners of a square from

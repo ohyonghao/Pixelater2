@@ -602,9 +602,9 @@ void scaleDown(Bitmap& o ) {
 }
 
 // Here's what drives our function
-void contours(Bitmap&o){
+void contours(Bitmap&o, int isovalues, int stepsize){
     Bitmap b(o);
-    auto cont = findContours(b,5);
+    auto cont = findContours(b,isovalues, stepsize);
 
     auto process_cont{cont};
 //    vector<vector<pt>> jm;
@@ -651,13 +651,13 @@ void contours(Bitmap&o){
         }
         color += 0x101123;
     }
-    cout << "Count: " << count << endl;
+    //cout << "Count: " << count << endl;
 }
 
-vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
+vector<vector<pt > > findContours(const Bitmap& o, int32_t isovalue, uint32_t step)
 {
     Bitmap b(o);
-    binaryGray(b, ISOVALUE);
+    binaryGray(b, isovalue);
    // Make it a binary by using a threshold and transforming the entire thing
 
     // The grids are independent of other grids
@@ -733,7 +733,6 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
         // If there is padding then we'll need to jump forward here
         // lt+=padding; rt+=padding; lb+=padding; rb+=padding;
     }
-    cout << "Point Size: " << points.size() << endl;
     // Now that we have our composed vector we can construct our single set of points to
     // complete the first step
 
@@ -790,7 +789,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             } );
             if( found.empty()){
                 // No points
-                cout << "Broken Segment, Starting new Polygon" << endl;
+                //cout << "Broken Segment, Starting new Polygon" << endl;
                 break;
             }
             auto best_pt = found.back(); found.pop_back();
@@ -815,7 +814,7 @@ vector<vector<pt > > findContours(const Bitmap& o, uint32_t step)
             interpolated_points.erase(best_pt.first);
 
             if( current_edge == last_edge ){
-                cout << "Finished Building Polygon" << endl;
+                //cout << "Finished Building Polygon" << endl;
                 done = true;
             }
         }
