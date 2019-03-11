@@ -15,8 +15,8 @@ ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget
 {
     std::ifstream in;
     in.open(_filename.toStdString(), ios::binary);
-    in >> image;
-    _cimage = image;
+    in >> _image;
+    _cimage = _image;
 
     createScene();
 }
@@ -28,7 +28,13 @@ void ImageDisplay::loadImage(){
 
     qDebug() << tr("Loading Image Parameters: %1, %2").arg(_isovalue).arg(_stepsize);
     // Load image
-    _cimage = image;
+    if(displayBinary){
+        _bimage = _image;
+        binaryGray(_bimage, _isovalue);
+        _cimage = _bimage;
+    }else{
+        _cimage = _image;
+    }
 
     contours(_cimage, _isovalue, _stepsize);
     std::ostringstream imageArray;
@@ -39,17 +45,17 @@ void ImageDisplay::loadImage(){
 
 }
 void ImageDisplay::BinaryGray(){
-    binaryGray(image, _isovalue);
+    binaryGray(_image, _isovalue);
     loadImage();
 }
 
 void ImageDisplay::Pixelate(){
-    pixelate(image);
+    pixelate(_image);
     loadImage();
 }
 
 void ImageDisplay::Blur(){
-    blur(image);
+    blur(_image);
     loadImage();
 }
 
@@ -59,5 +65,10 @@ void ImageDisplay::Contour(){
 void ImageDisplay::save(){
     std::ofstream of;
     of.open( (QString("image_contour.bmp")).toStdString() );
-    of << image;
+    of << _image;
+}
+
+void ImageDisplay::toggleBinary(){
+    displayBinary = !displayBinary;
+    loadImage();
 }

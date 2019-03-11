@@ -77,17 +77,24 @@ void MainWindow::createSettingsGroup(){
 
     QVBoxLayout *layout = new QVBoxLayout;
 
+    QPushButton *incIsoArrow;
+    QPushButton *decIsoArrow;
+    QPushButton *incStepArrow;
+    QPushButton *decStepArrow;
     // Add sliders
     QGroupBox *gbSliders = new QGroupBox(tr("Settings"));
     QGridLayout *glSliders = new QGridLayout;
     lIsovalue = new QLabel(tr("Isovalue"));
     sIsovalue = new QSlider(Qt::Horizontal);
-    //lIsovalueDisplayValue = new QLabel(QString(ISOVALUE));
     sIsovalue->setRange(0,255);
     sIsovalue->setValue(ISOVALUE);
     glSliders->addWidget(lIsovalue,0,0);
+    decIsoArrow = new QPushButton(tr("<<"));
+    glSliders->addWidget(decIsoArrow,0,1);
     //glSliders->addWidget(lIsovalueDisplayValue,0,1);
-    glSliders->addWidget(sIsovalue,0,1);
+    glSliders->addWidget(sIsovalue,0,2);
+    incIsoArrow = new QPushButton(tr(">>"));
+    glSliders->addWidget(incIsoArrow,0,3);
 
     lStepSize = new QLabel;
     sStepsize = new QSlider(Qt::Horizontal);
@@ -95,12 +102,20 @@ void MainWindow::createSettingsGroup(){
     sStepsize->setRange(1,40);
     sStepsize->setValue(STEPSIZE);
     glSliders->addWidget(lStepSize,1,0);
+    decStepArrow = new QPushButton(tr("<<"));
+    glSliders->addWidget(decStepArrow, 1,1);
     //glSliders->addWidget(lStepSizeDisplayValue,1,1);
-    glSliders->addWidget(sStepsize,1,1);
+    glSliders->addWidget(sStepsize,1,2);
+    incStepArrow = new QPushButton(tr(">>"));
+    glSliders->addWidget(incStepArrow,1,3);
     gbSliders->setLayout(glSliders);
 
     connect(sIsovalue, &QSlider::valueChanged, this, &MainWindow::updateIsoValue);
     connect(sStepsize, &QSlider::valueChanged, this, &MainWindow::updateStepValue);
+    connect(incIsoArrow, &QPushButton::pressed, this, &MainWindow::increaseIsoPressed);
+    connect(decIsoArrow, &QPushButton::pressed, this, &MainWindow::decreaseIsoPressed);
+    connect(incStepArrow, &QPushButton::pressed, this, &MainWindow::increaseStepPressed);
+    connect(decStepArrow, &QPushButton::pressed, this, &MainWindow::decreaseStepPressed);
     updateIsoValue(ISOVALUE);
     updateStepValue(STEPSIZE);
 
@@ -120,6 +135,9 @@ void MainWindow::createSettingsGroup(){
     swShowImage->addWidget(pbShowBinary);
     swShowImage->addWidget(pbShowOriginal);
     swShowImage->setCurrentIndex(0);
+
+    connect(pbShowBinary, &QPushButton::pressed, this, &MainWindow::toggleBinary);
+    connect(pbShowOriginal, &QPushButton::pressed, this, &MainWindow::toggleBinary);
 
     // Add to layout
     layout->addWidget(gbSliders);
@@ -163,4 +181,22 @@ void MainWindow::createImageConnections(){
     connect(pbBlurFilter, &QPushButton::pressed, image, &ImageDisplay::Blur );
     connect(sIsovalue, &QSlider::valueChanged, image, &ImageDisplay::setIsovalue);
     connect(sStepsize, &QSlider::valueChanged, image, &ImageDisplay::setStepSize);
+    connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
+    connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
+}
+
+void MainWindow::increaseIsoPressed(){
+    sIsovalue->setValue(sIsovalue->value()+1);
+}
+void MainWindow::decreaseIsoPressed(){
+    sIsovalue->setValue(sIsovalue->value()-1);
+}
+void MainWindow::increaseStepPressed(){
+    sStepsize->setValue(sStepsize->value()+1);
+}
+void MainWindow::decreaseStepPressed(){
+    sStepsize->setValue(sStepsize->value()-1);
+}
+void MainWindow::toggleBinary(){
+    swShowImage->setCurrentIndex(!swShowImage->currentIndex());
 }

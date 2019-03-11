@@ -66,6 +66,11 @@ private:
 public slots:
     void updateIsoValue(int);
     void updateStepValue(int);
+    void increaseIsoPressed();
+    void decreaseIsoPressed();
+    void increaseStepPressed();
+    void decreaseStepPressed();
+    void toggleBinary();
     void openFile();
 };
 

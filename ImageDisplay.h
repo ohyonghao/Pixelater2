@@ -27,7 +27,8 @@ private:
     QPixmap  pixmap;
     QImage   *imageData;
 
-    Bitmap image;
+    Bitmap _image;
+    Bitmap _bimage;
     Bitmap _cimage;
     QString _filename;
     QImage::Format format;
@@ -35,6 +36,7 @@ private:
     QLabel *imageLabel;
 
     bool success = false;
+    bool displayBinary = false;
 
     // Edit values
     int _isovalue = 57;
@@ -49,6 +51,7 @@ public slots:
     void Contour();
     void setIsovalue(int isovalue){ _isovalue = isovalue; loadImage();}
     void setStepSize(int stepsize){ _stepsize = stepsize; loadImage();}
+    void toggleBinary();
     void save();
 };
 
