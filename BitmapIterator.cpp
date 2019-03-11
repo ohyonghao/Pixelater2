@@ -23,8 +23,8 @@ bool BitmapIterator::operator!=(const BitmapIterator& rhs)const{
 
 void BitmapIterator::incWidth(uint32_t i){
     _cwidth+=i;
-    while(_cwidth > _data->width()){
-        _cwidth-= _data->width();
-        _iterator+=_data->padding();
+    while(_cwidth >= _data->width()){
+        _cwidth   -= _data->width();
+        _iterator += _data->padding();
     }
 }

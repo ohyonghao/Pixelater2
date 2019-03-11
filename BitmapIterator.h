@@ -28,7 +28,7 @@ private:
 
     decltype(std::vector<uint8_t>().begin()) _iterator;
     uint32_t _step;
-    uint32_t _cwidth;
+    int32_t _cwidth{0};
     void incWidth(uint32_t i);
 };
 
