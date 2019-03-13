@@ -5,72 +5,28 @@
 #include <QByteArray>
 #include <QIODevice>
 #include <QTextStream>
+#include <QDebug>
 #include "bitmap.h"
 
 ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget *parent) : QWidget(parent),
-  _filename{filename},
-  _isovalue{isovalue},
-  _stepsize{stepsize}
+    imageLabel{new QLabel(this)},
+    processor{filename, isovalue, stepsize}
 {
-    std::ifstream in;
-    in.open(_filename.toStdString(), ios::binary);
-    in >> _image;
-    _cimage = _image;
-
-    createScene();
+    connect(&processor, &ImageProcessor::imageProcessed, this, &ImageDisplay::loadImage);
+    processor.start();
 }
-void ImageDisplay::createScene(){
-    imageLabel = new QLabel(this);
-    loadImage();
-}
-void ImageDisplay::loadImage(){
-// Load image
-    if(displayBinary){
-        _bimage = _image;
-        binaryGray(_bimage, _isovalue);
-        _cimage = _bimage;
-    }else{
-        _cimage = _image;
-    }
-
-    contours(_cimage, _isovalue, _stepsize);
-    std::ostringstream imageArray;
-    imageArray << _cimage;
-    QByteArray stream(imageArray.str().data(), imageArray.str().size());
-    success = pixmap.loadFromData(stream,"BMP");
+void ImageDisplay::loadImage(const QByteArray &stream){
+    bool success = pixmap.loadFromData(stream,"BMP");
     imageLabel->setPixmap(pixmap);
-
-}
-void ImageDisplay::BinaryGray(){
-    binaryGray(_image, _isovalue);
-    loadImage();
-}
-
-void ImageDisplay::Pixelate(){
-    pixelate(_image);
-    loadImage();
-}
-
-void ImageDisplay::Blur(){
-    blur(_image);
-    loadImage();
-}
-
-void ImageDisplay::Contour(){
-    loadImage();
-}
-
-void ImageDisplay::CelShade(){
-    cellShade(_image);
-    loadImage();
+    update();
+    qDebug() << (success ? "Loaded Successfully" : "Did not load");
 }
 void ImageDisplay::save(){
-    std::ofstream of;
-    of.open( (QString("image_contour.bmp")).toStdString() );
-    of << _image;
+    //std::ofstream of;
+    //of.open( (QString("image_contour.bmp")).toStdString() );
+    //of << _image;
 }
 
 void ImageDisplay::toggleBinary(){
-    displayBinary = !displayBinary;
-    loadImage();
+    processor.toggleBinary();
 }

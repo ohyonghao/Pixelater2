@@ -29,7 +29,8 @@ SOURCES += \
         MainWindow.cpp \
         ImageDisplay.cpp \
         bitmap.cpp \
-    BitmapIterator.cpp
+    BitmapIterator.cpp \
+    ImageProcessor.cpp
 
 
 HEADERS += \
@@ -39,7 +40,8 @@ HEADERS += \
         pixel.h \
         point.hpp \
         jarvisMarch.hpp \
-    BitmapIterator.h
+    BitmapIterator.h \
+    ImageProcessor.h
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

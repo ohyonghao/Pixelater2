@@ -6,7 +6,6 @@ BitmapIterator::BitmapIterator():
     _iterator{},
     _step{0}
 {
-
 }
 
 BitmapIterator::BitmapIterator(Bitmap* data, bool end):
