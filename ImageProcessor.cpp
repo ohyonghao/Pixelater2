@@ -4,7 +4,6 @@
 #include <QByteArray>
 #include <QIODevice>
 #include <QTextStream>
-#include <QDebug>
 #include "ImageProcessor.h"
 
 ImageProcessor::ImageProcessor(QString filename, int isovalue, int stepsize, QObject *parent):
@@ -51,45 +50,35 @@ void ImageProcessor::_LoadImage(){
 
     std::ifstream in;
     in.open(_filename.toStdString(), ios::binary);
-    mutex.lock();
+
+    QMutexLocker locker(&mutex);
     in >> _image;
     _cimage = _image;
     _bimage = _image;
     binaryGray(_bimage, _isovalue);
-    mutex.unlock();
 
 }
 
 void ImageProcessor::_Blur(){
-    mutex.lock();
+    QMutexLocker locker(&mutex);
     blur(_image);
-    mutex.unlock();
-    processImage();
 }
 void ImageProcessor::_Contour(){
-    processImage();
 }
 void ImageProcessor::_CelShade(){
-    mutex.lock();
+    QMutexLocker locker(&mutex);
     cellShade(_image);
-    mutex.unlock();
-    processImage();
 }
 void ImageProcessor::_Pixelate(){
-    mutex.lock();
+    QMutexLocker locker(&mutex);
     pixelate(_image);
-    mutex.unlock();
-    processImage();
 }
 void ImageProcessor::_BinaryGray(){
-    mutex.lock();
+    QMutexLocker locker(&mutex);
     binaryGray(_image, _isovalue);
-    mutex.unlock();
-    restart=true;
 }
 void ImageProcessor::_toggleBinary(){
     displayBinary = !displayBinary;
-    restart = true;
 }
 
 void ImageProcessor::run(){
@@ -97,7 +86,6 @@ void ImageProcessor::run(){
         if( abort )
             return;
         while(!queued.isEmpty()){
-            qDebug() << "Processing Commands";
             qmutex.lock();
             auto func = queued.takeFirst();
             qmutex.unlock();
@@ -121,6 +109,11 @@ void ImageProcessor::run(){
                 _toggleBinary();
                 break;
             case PROCESS:
+                // Not sure if I need this, but could make things faster.
+//                if(!queued.isEmpty()){
+//                    // Skip processing if another command waits
+//                    continue;
+//                }
                 break;
             case LOAD_IMAGE:
                 _LoadImage();
@@ -128,11 +121,11 @@ void ImageProcessor::run(){
             default:
                 continue;
             }
-            processImage();
             if(queued.empty()){
+                processImage();
                 std::ostringstream imageArray;
                 mutex.lock();
-                imageArray << _image;
+                imageArray << _cimage;
                 mutex.unlock();
                 QByteArray stream(imageArray.str().data(), imageArray.str().size());
                 emit imageProcessed(stream);

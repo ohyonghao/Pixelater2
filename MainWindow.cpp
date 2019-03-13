@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-#include <QDebug>
 #include <QSpacerItem>
 #include <string>
 
@@ -155,8 +154,6 @@ void MainWindow::createSettingsGroup(){
 
 void MainWindow::setLayoutHeight(){
     if(image){
-        auto iSize = image->size();
-        qDebug() << "Setting size: " << iSize;
         gbDisplay->setMinimumSize(image->size());
     }
 }
@@ -191,8 +188,8 @@ void MainWindow::createImageConnections(){
     connect(pbBlurFilter, &QPushButton::pressed, image, &ImageDisplay::Blur );
     connect(pbCelShade, &QPushButton::pressed, image, &ImageDisplay::CelShade );
 
-    connect(sIsovalue, &QSlider::valueChanged, image, &ImageDisplay::setIsovalue);
-    connect(sStepsize, &QSlider::valueChanged, image, &ImageDisplay::setStepSize);
+    connect(sIsovalue, &QSlider::sliderReleased, this, &MainWindow::setIsoValue);
+    connect(sStepsize, &QSlider::sliderReleased, this, &MainWindow::setStepSize);
     connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(image, &ImageDisplay::imageLoaded, this, &MainWindow::setLayoutHeight);

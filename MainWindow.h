@@ -66,6 +66,8 @@ private:
 
 private slots:
     void setLayoutHeight();
+    void setIsoValue(){if(image){image->setIsovalue(sIsovalue->value());}}
+    void setStepSize(){if(image){image->setStepSize(sStepsize->value());}}
 public slots:
     void updateIsoValue(int);
     void updateStepValue(int);

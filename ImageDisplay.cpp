@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include <QIODevice>
 #include <QTextStream>
-#include <QDebug>
 #include "bitmap.h"
 
 ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget *parent) : QWidget(parent),
