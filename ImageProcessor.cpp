@@ -34,16 +34,22 @@ if (!isRunning()) {
 }
 void ImageProcessor::processImage(){
     QMutexLocker locker(&mutex);
+    isomutex.lock();
+    int iso = _isovalue;
+    isomutex.unlock();
+    stepsizemutex.lock();
+    int stepsize = _stepsize;
+    stepsizemutex.unlock();
     // Load image
     if(displayBinary){
         _bimage = _image;
-        binaryGray(_bimage, _isovalue);
+        binaryGray(_bimage, iso);
         _cimage = _bimage;
     }else{
         _cimage = _image;
     }
 
-    contours(_cimage, _isovalue, _stepsize);
+    contours(_cimage, iso, stepsize);
 }
 
 void ImageProcessor::_LoadImage(){
@@ -89,6 +95,7 @@ void ImageProcessor::run(){
             qmutex.lock();
             auto func = queued.takeFirst();
             qmutex.unlock();
+            emit queueUpdated(queued.size());
             switch(func){
             case BINARY_GRAY:
                 _BinaryGray();
@@ -108,12 +115,17 @@ void ImageProcessor::run(){
             case TOGGLEBINARY:
                 _toggleBinary();
                 break;
-            case PROCESS:
-                // Not sure if I need this, but could make things faster.
-//                if(!queued.isEmpty()){
-//                    // Skip processing if another command waits
-//                    continue;
-//                }
+            case ISO:
+                if(!queued.isEmpty() && queued.first() == ISO){
+                    // Skip processing if another command waits
+                    continue;
+                }
+                break;
+            case STEP:
+                if(!queued.isEmpty() && queued.first() == STEP){
+                // Skip processing if another command waits
+                continue;
+                }
                 break;
             case LOAD_IMAGE:
                 _LoadImage();
@@ -121,7 +133,7 @@ void ImageProcessor::run(){
             default:
                 continue;
             }
-            if(queued.empty()){
+            //if(queued.empty()){
                 processImage();
                 std::ostringstream imageArray;
                 mutex.lock();
@@ -129,7 +141,7 @@ void ImageProcessor::run(){
                 mutex.unlock();
                 QByteArray stream(imageArray.str().data(), imageArray.str().size());
                 emit imageProcessed(stream);
-            }
+            //}
             mutex.lock();
             if(queued.isEmpty()){
                 condition.wait(&mutex);

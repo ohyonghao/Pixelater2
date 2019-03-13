@@ -46,9 +46,8 @@ private:
     QPushButton     *pbBinFilter;
     QPushButton     *pbCelShade;
     QLabel          *lIsovalue;
-    //QLabel          *lIsovalueDisplayValue;
     QLabel          *lStepSize;
-    //QLabel          *lStepSizeDisplayValue;
+    QLabel          *lQueued;
     QRadioButton    *rbBinary;
     QRadioButton    *rbGrayscale;
     QSlider         *sIsovalue;
@@ -68,6 +67,7 @@ private slots:
     void setLayoutHeight();
     void setIsoValue(){if(image){image->setIsovalue(sIsovalue->value());}}
     void setStepSize(){if(image){image->setStepSize(sStepsize->value());}}
+    void updateProcessLabel(int);
 public slots:
     void updateIsoValue(int);
     void updateStepValue(int);

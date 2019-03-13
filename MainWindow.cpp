@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui = new QWidget;
     setCentralWidget(ui);
     createMenu();
+    lQueued = new QLabel();
+    updateProcessLabel(0);
     createDisplayGroup();
     createFilterGroup();
     createSettingsGroup();
@@ -18,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainlayout->addWidget(gbDisplay,0,0,2,1);
     mainlayout->addWidget(gbSettings,0,1,1,1);
     mainlayout->addWidget(gbFilter,0,2,1,1);
+    mainlayout->addWidget(lQueued,3,2,1,1);
 
     ui->setLayout(mainlayout);
     setWindowTitle(tr("Pixelater Qt2000"));
@@ -193,20 +196,28 @@ void MainWindow::createImageConnections(){
     connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(image, &ImageDisplay::imageLoaded, this, &MainWindow::setLayoutHeight);
+    connect(image, &ImageDisplay::processQueued, this, &MainWindow::updateProcessLabel);
 }
 
 void MainWindow::increaseIsoPressed(){
     sIsovalue->setValue(sIsovalue->value()+1);
+    setIsoValue();
 }
 void MainWindow::decreaseIsoPressed(){
     sIsovalue->setValue(sIsovalue->value()-1);
+    setIsoValue();
 }
 void MainWindow::increaseStepPressed(){
     sStepsize->setValue(sStepsize->value()+1);
+    setStepSize();
 }
 void MainWindow::decreaseStepPressed(){
     sStepsize->setValue(sStepsize->value()-1);
+    setStepSize();
 }
 void MainWindow::toggleBinary(){
     swShowImage->setCurrentIndex(!swShowImage->currentIndex());
+}
+void MainWindow::updateProcessLabel(int _size){
+    lQueued->setText(tr("Processes Queued: %1").arg(_size));
 }

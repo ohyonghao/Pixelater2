@@ -15,18 +15,19 @@ class ImageProcessor : public QThread
 {
     Q_OBJECT
 
-    enum Processes {BINARY_GRAY, PIXELATE, BLUR, CONTOUR, CELSHADE, TOGGLEBINARY, PROCESS, LOAD_IMAGE};
+    enum Processes {BINARY_GRAY, PIXELATE, BLUR, CONTOUR, CELSHADE, TOGGLEBINARY, ISO, STEP, LOAD_IMAGE};
 public:
     ImageProcessor(QString filename, int isovalue, int stepsize, QObject *parent=nullptr);
     ~ImageProcessor() override;
 
     void processImage();
 
-    void setIsovalue(int isovalue){ QMutexLocker locker(&mutex); _isovalue = isovalue; queued.push_back(PROCESS); _restartThread();}
-    void setStepSize(int stepsize){ QMutexLocker locker(&mutex); _stepsize = stepsize; queued.push_back(PROCESS); _restartThread();}
+    void setIsovalue(int isovalue){ isomutex.lock(); _isovalue = isovalue; isomutex.unlock(); _queueProcess(ISO); }
+    void setStepSize(int stepsize){ isomutex.lock(); _stepsize = stepsize; isomutex.unlock(); _queueProcess(STEP);}
 
 signals:
     void imageProcessed( const QByteArray &image);
+    void queueUpdated(int);
 
 protected:
     void run() override;
@@ -34,6 +35,8 @@ protected:
 private:
     QMutex mutex;
     QMutex qmutex;
+    QMutex isomutex;
+    QMutex stepsizemutex;
     QWaitCondition condition;
     bool restart;
     bool abort;
@@ -61,14 +64,20 @@ private:
     void _LoadImage();
     void _restartThread();
 
+    void _queueProcess(Processes process){
+        QMutexLocker locker(&qmutex);
+        queued.push_back(process);
+        emit queueUpdated(queued.size());
+        _restartThread();}
+
 public:
     // Processing functions
-    void BinaryGray(){QMutexLocker locker(&qmutex);queued.push_back(BINARY_GRAY);_restartThread();}
-    void Pixelate(){QMutexLocker locker(&qmutex);queued.push_back(PIXELATE);_restartThread();}
-    void Blur(){QMutexLocker locker(&qmutex);queued.push_back(BLUR);_restartThread();}
-    void Contour(){QMutexLocker locker(&qmutex);queued.push_back(CONTOUR);_restartThread();}
-    void CelShade(){QMutexLocker locker(&qmutex);queued.push_back(CELSHADE);_restartThread();}
-    void toggleBinary(){QMutexLocker locker(&qmutex);queued.push_back(TOGGLEBINARY);_restartThread();}
+    void BinaryGray(){_queueProcess(BINARY_GRAY);}
+    void Pixelate(){_queueProcess(PIXELATE);}
+    void Blur(){_queueProcess(BLUR);}
+    void Contour(){_queueProcess(CONTOUR);}
+    void CelShade(){_queueProcess(CELSHADE);}
+    void toggleBinary(){_queueProcess(TOGGLEBINARY);}
 };
 
 #endif // IMAGEPROCESSOR_H

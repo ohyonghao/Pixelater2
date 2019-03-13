@@ -29,6 +29,7 @@ private:
 
 signals:
     void imageLoaded();
+    void processQueued(int);
 
 private slots:
     void loadImage(const QByteArray &image);

@@ -12,6 +12,7 @@ ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget
     processor{filename, isovalue, stepsize}
 {
     connect(&processor, &ImageProcessor::imageProcessed, this, &ImageDisplay::loadImage);
+    connect(&processor, &ImageProcessor::queueUpdated, this, &ImageDisplay::processQueued);
     processor.start();
 }
 void ImageDisplay::loadImage(const QByteArray &stream){
