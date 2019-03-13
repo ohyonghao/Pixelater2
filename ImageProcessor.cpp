@@ -6,15 +6,16 @@
 #include <QTextStream>
 #include "ImageProcessor.h"
 
-ImageProcessor::ImageProcessor(QString filename, int isovalue, int stepsize, QObject *parent):
+ImageProcessor::ImageProcessor(QString filename, int isovalue, int stepsize, bool useBinaryInter, QObject *parent):
     QThread{parent},
     restart{false},
     abort{false},
     _filename{filename},
     _isovalue{isovalue},
-    _stepsize{stepsize}
+    _stepsize{stepsize},
+    _usebinaryinter{useBinaryInter}
 {
-    queued.push_back(LOAD_IMAGE);
+    _queueProcess(LOAD_IMAGE);
 }
 
 ImageProcessor::~ImageProcessor(){
@@ -34,12 +35,9 @@ if (!isRunning()) {
 }
 void ImageProcessor::processImage(){
     QMutexLocker locker(&mutex);
-    isomutex.lock();
-    int iso = _isovalue;
-    isomutex.unlock();
-    stepsizemutex.lock();
-    int stepsize = _stepsize;
-    stepsizemutex.unlock();
+    isomutex.lock();      int iso         = _isovalue;          isomutex.unlock();
+    stepsizemutex.lock(); int stepsize    = _stepsize;     stepsizemutex.unlock();
+    binarymutex.lock();  bool usebininter = _usebinaryinter; binarymutex.unlock();
     // Load image
     if(displayBinary){
         _bimage = _image;
@@ -49,7 +47,7 @@ void ImageProcessor::processImage(){
         _cimage = _image;
     }
 
-    contours(_cimage, iso, stepsize);
+    contours(_cimage, iso, stepsize, usebininter);
 }
 
 void ImageProcessor::_LoadImage(){
@@ -129,6 +127,8 @@ void ImageProcessor::run(){
                 break;
             case LOAD_IMAGE:
                 _LoadImage();
+                break;
+            case PROCESS:
                 break;
             default:
                 continue;

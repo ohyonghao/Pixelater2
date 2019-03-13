@@ -15,7 +15,7 @@ class ImageDisplay : public QWidget
 {
     Q_OBJECT
 public:
-    explicit ImageDisplay(QString filename, int isovalue=57, int stepsize = 5, QWidget *parent = nullptr);
+    explicit ImageDisplay(QString filename, int isovalue=57, int stepsize = 5, bool useBinaryInter = true, QWidget *parent = nullptr);
     QSizePolicy sizePolicy(){return imageLabel->sizePolicy();}
     QSize size(){return imageLabel->size();}
 private:
@@ -42,7 +42,9 @@ public slots:
     void CelShade(){processor.CelShade();}
     void setIsovalue(int isovalue){ processor.setIsovalue(isovalue);}
     void setStepSize(int stepsize){ processor.setStepSize(stepsize);}
+    void setBinaryInter(bool usebininter){processor.setBinaryInter(usebininter);}
     void toggleBinary();
+    void LoadImage(){processor.LoadImage();}
     void save();
 };
 

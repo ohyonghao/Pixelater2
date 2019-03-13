@@ -236,7 +236,7 @@ void flipd2(Bitmap& b);
 void scaleUp(Bitmap& b);
 void scaleDown(Bitmap& b);
 
-void contours(Bitmap& b, int isovalues=ISOVALUE, int stepsize=STEPSIZE);
+void contours(Bitmap& b, int32_t isovalues=ISOVALUE, int32_t stepsize=STEPSIZE, bool useBinaryBitmap = true);
 
 // Final Functions
 
@@ -252,7 +252,7 @@ void binaryGray( Bitmap &image, const uint32_t isovalue);
  * \param o
  * \return vector of sets of points that create a completed contour shape
  */
-vector<vector<pt>> findContours(const Bitmap& o, int32_t isovalue, uint32_t step);
+vector<vector<pt>> findContours(const Bitmap& o, int32_t isovalue, uint32_t step, bool useBinaryInterp);
 /*!
  * \brief edges lookup table for 2^4 edge possibilities
  * \param square a binary value with positions 0,1,2,3 being the corners of a square from

@@ -7,9 +7,9 @@
 #include <QTextStream>
 #include "bitmap.h"
 
-ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget *parent) : QWidget(parent),
+ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, bool useBinaryInter, QWidget *parent) : QWidget(parent),
     imageLabel{new QLabel(this)},
-    processor{filename, isovalue, stepsize}
+    processor{filename, isovalue, stepsize, useBinaryInter}
 {
     connect(&processor, &ImageProcessor::imageProcessed, this, &ImageDisplay::loadImage);
     connect(&processor, &ImageProcessor::queueUpdated, this, &ImageDisplay::processQueued);

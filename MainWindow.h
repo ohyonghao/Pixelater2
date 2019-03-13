@@ -45,6 +45,7 @@ private:
     QPushButton     *pbGrayFilter;
     QPushButton     *pbBinFilter;
     QPushButton     *pbCelShade;
+    QPushButton     *pbReload;
     QLabel          *lIsovalue;
     QLabel          *lStepSize;
     QLabel          *lQueued;

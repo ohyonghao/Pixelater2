@@ -64,11 +64,13 @@ void MainWindow::createFilterGroup(){
     pbGrayFilter = new QPushButton(tr("Grayscale"));
     pbBinFilter  = new QPushButton(tr("Binary Gray"));
     pbCelShade   = new QPushButton(tr("Cel Shade"));
+    pbReload     = new QPushButton(tr("Reload"));
     layout->addWidget(pbPixFilter);
     layout->addWidget(pbBlurFilter);
     layout->addWidget(pbGrayFilter);
     layout->addWidget(pbBinFilter);
     layout->addWidget(pbCelShade);
+    layout->addWidget(pbReload);
     layout->addStretch();
 
     layout->setSizeConstraint(QLayout::SetFixedSize);
@@ -129,6 +131,8 @@ void MainWindow::createSettingsGroup(){
     QVBoxLayout *rbLayout = new QVBoxLayout;
     rbBinary    = new QRadioButton(tr("Binary"));
     rbGrayscale = new QRadioButton(tr("Grayscale"));
+    rbBinary->setChecked(true);
+
     rbLayout->addWidget(rbBinary);
     rbLayout->addWidget(rbGrayscale);
     gbContour->setLayout(rbLayout);
@@ -170,7 +174,7 @@ void MainWindow::openFile(){
         slImage->removeWidget(image);
         delete image;
     }
-    image = new ImageDisplay(fileName);
+    image = new ImageDisplay(fileName, sIsovalue->value(), sStepsize->value(), rbBinary->isChecked());
     slImage->setCurrentIndex((slImage->addWidget(image)));
 
     createImageConnections();
@@ -195,8 +199,10 @@ void MainWindow::createImageConnections(){
     connect(sStepsize, &QSlider::sliderReleased, this, &MainWindow::setStepSize);
     connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
+    connect(pbReload, &QPushButton::pressed, image, &ImageDisplay::LoadImage);
     connect(image, &ImageDisplay::imageLoaded, this, &MainWindow::setLayoutHeight);
     connect(image, &ImageDisplay::processQueued, this, &MainWindow::updateProcessLabel);
+    connect(rbBinary, &QRadioButton::toggled, image, &ImageDisplay::setBinaryInter);
 }
 
 void MainWindow::increaseIsoPressed(){

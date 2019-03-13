@@ -15,15 +15,16 @@ class ImageProcessor : public QThread
 {
     Q_OBJECT
 
-    enum Processes {BINARY_GRAY, PIXELATE, BLUR, CONTOUR, CELSHADE, TOGGLEBINARY, ISO, STEP, LOAD_IMAGE};
+    enum Processes {BINARY_GRAY, PIXELATE, BLUR, CONTOUR, CELSHADE, TOGGLEBINARY, ISO, STEP, LOAD_IMAGE, PROCESS};
 public:
-    ImageProcessor(QString filename, int isovalue, int stepsize, QObject *parent=nullptr);
+    ImageProcessor(QString filename, int isovalue, int stepsize, bool useBinaryInter, QObject *parent=nullptr);
     ~ImageProcessor() override;
 
     void processImage();
 
     void setIsovalue(int isovalue){ isomutex.lock(); _isovalue = isovalue; isomutex.unlock(); _queueProcess(ISO); }
     void setStepSize(int stepsize){ isomutex.lock(); _stepsize = stepsize; isomutex.unlock(); _queueProcess(STEP);}
+    void setBinaryInter( bool binaryInter ){binarymutex.lock(); _usebinaryinter = binaryInter; binarymutex.unlock() ;_queueProcess(PROCESS);}
 
 signals:
     void imageProcessed( const QByteArray &image);
@@ -37,7 +38,10 @@ private:
     QMutex qmutex;
     QMutex isomutex;
     QMutex stepsizemutex;
+    QMutex binarymutex;
+
     QWaitCondition condition;
+
     bool restart;
     bool abort;
     Bitmap _image;
@@ -54,6 +58,7 @@ private:
     // Edit values
     int _isovalue = 57;
     int _stepsize = 5;
+    bool _usebinaryinter = true;
 
     void _BinaryGray();
     void _Pixelate();
@@ -78,6 +83,7 @@ public:
     void Contour(){_queueProcess(CONTOUR);}
     void CelShade(){_queueProcess(CELSHADE);}
     void toggleBinary(){_queueProcess(TOGGLEBINARY);}
+    void LoadImage(){_queueProcess(LOAD_IMAGE);}
 };
 
 #endif // IMAGEPROCESSOR_H

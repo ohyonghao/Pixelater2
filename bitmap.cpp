@@ -587,9 +587,9 @@ void scaleDown(Bitmap& o ) {
 }
 
 // Here's what drives our function
-void contours(Bitmap&o, int isovalues, int stepsize){
+void contours(Bitmap&o, int32_t isovalues, int32_t stepsize, bool useBinaryBitmap){
     Bitmap b(o);
-    auto cont = findContours(b,isovalues, stepsize);
+    auto cont = findContours(b,isovalues, stepsize, useBinaryBitmap);
 
     auto process_cont{cont};
 //    vector<vector<pt>> jm;
@@ -639,10 +639,12 @@ void contours(Bitmap&o, int isovalues, int stepsize){
     //cout << "Count: " << count << endl;
 }
 
-vector<vector<pt > > findContours(const Bitmap& o, int32_t isovalue, uint32_t step)
+vector<vector<pt > > findContours(const Bitmap& o, int32_t isovalue, uint32_t step, bool useBinaryInterp)
 {
     Bitmap b(o);
     binaryGray(b, isovalue);
+
+    const Bitmap &interBitmap = useBinaryInterp ? b : o;
    // Make it a binary by using a threshold and transforming the entire thing
 
     // The grids are independent of other grids
@@ -730,8 +732,8 @@ vector<vector<pt > > findContours(const Bitmap& o, int32_t isovalue, uint32_t st
     map<pt,pair<pt,pt>,PointEquality<point_t>> interpolated_points;
 
     for(auto i: points){
-        pt e1 = interpolation(i.second.first.first, i.second.first.second, b.r(i.second.first.first), b.r(i.second.first.second), 0 );
-        pt e2 = interpolation(i.second.second.first, i.second.second.second, b.r(i.second.second.first), b.r(i.second.second.second), 0 );
+        pt e1 = interpolation(i.second.first.first, i.second.first.second, interBitmap.r(i.second.first.first), interBitmap.r(i.second.first.second), 0 );
+        pt e2 = interpolation(i.second.second.first, i.second.second.second, interBitmap.r(i.second.second.first), interBitmap.r(i.second.second.second), 0 );
 
         interpolated_points[i.first] = make_pair( e1, e2 );
     }
@@ -788,14 +790,16 @@ vector<vector<pt > > findContours(const Bitmap& o, int32_t isovalue, uint32_t st
                 }
             }
 
-            // Place the best point into our polygon
-            poly.emplace_back(best_pt.first);
-
             // Update the current vertex
             cv = best_pt.first;
 
-            // We joined one side, we want to join the other side next
-            current_edge = ( current_edge == best_pt.second.first ) ? best_pt.second.second : best_pt.second.first;
+            if( current_edge == best_pt.second.first){
+                poly.emplace_back(best_pt.second.first);
+                current_edge = best_pt.second.second;
+            }else{
+                poly.emplace_back(best_pt.second.second);
+                current_edge = best_pt.second.first;
+            }
             interpolated_points.erase(best_pt.first);
 
             if( current_edge == last_edge ){
