@@ -24,7 +24,7 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow(){}
 
 private:
     void createMenu();
@@ -45,6 +45,7 @@ private:
     QPushButton     *pbGrayFilter;
     QPushButton     *pbBinFilter;
     QPushButton     *pbCelShade;
+    QPushButton     *pbScaleDown;
     QPushButton     *pbReload;
     QLabel          *lIsovalue;
     QLabel          *lStepSize;

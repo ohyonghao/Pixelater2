@@ -15,8 +15,20 @@ class ImageProcessor : public QThread
 {
     Q_OBJECT
 
-    enum Processes {BINARY_GRAY, PIXELATE, BLUR, CONTOUR, CELSHADE, TOGGLEBINARY, ISO, STEP, LOAD_IMAGE, PROCESS};
 public:
+    enum Processes {BINARY_GRAY,
+                    PIXELATE,
+                    BLUR,
+                    CONTOUR,
+                    CELSHADE,
+                    TOGGLEBINARY,
+                    ISO,
+                    STEP,
+                    LOAD_IMAGE,
+                    PROCESS,
+                    SCALE_DOWN,
+                    GRAY_SCALE
+                   };
     ImageProcessor(QString filename, int isovalue, int stepsize, bool useBinaryInter, QObject *parent=nullptr);
     ~ImageProcessor() override;
 
@@ -67,6 +79,8 @@ private:
     void _CelShade();
     void _toggleBinary();
     void _LoadImage();
+    void _ScaleDown();
+    void _GrayScale();
     void _restartThread();
 
     void _queueProcess(Processes process){
@@ -77,13 +91,7 @@ private:
 
 public:
     // Processing functions
-    void BinaryGray(){_queueProcess(BINARY_GRAY);}
-    void Pixelate(){_queueProcess(PIXELATE);}
-    void Blur(){_queueProcess(BLUR);}
-    void Contour(){_queueProcess(CONTOUR);}
-    void CelShade(){_queueProcess(CELSHADE);}
-    void toggleBinary(){_queueProcess(TOGGLEBINARY);}
-    void LoadImage(){_queueProcess(LOAD_IMAGE);}
+    void QueueProcess(Processes process){ _queueProcess(process);}
 };
 
 #endif // IMAGEPROCESSOR_H

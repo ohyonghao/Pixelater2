@@ -155,7 +155,7 @@ public:
 
     int32_t  height() const{ return dibs.height < 0 ? -dibs.height: dibs.height ; }
     int32_t  width() const{ return dibs.width; }
-    uint32_t  rowWidth() const{return _rowWidth; }
+    uint32_t rowWidth() const{return _rowWidth; }
     void     setHeight( int32_t height ){ setDimension( dibs.width, height); }
     void     setWidth( int32_t width ){ setDimension( width, dibs.height); }
     uint32_t rmask() const{ return r_mask; }
@@ -245,7 +245,7 @@ void contours(Bitmap& b, int32_t isovalues=ISOVALUE, int32_t stepsize=STEPSIZE, 
  * \param image is the canvas to be changed to binary gray
  * \param isovalue the grayscale value to split between negative and positive (0, 1)
  */
-void binaryGray( Bitmap &image, const uint32_t isovalue);
+void binaryGray( Bitmap &image, const int32_t isovalue);
 /*!
  * \brief findContours returns a vector of vectors of points, that is to say that
  *        each vector is a set of points that should form a completed contour

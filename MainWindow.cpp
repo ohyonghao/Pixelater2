@@ -26,11 +26,6 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle(tr("Pixelater Qt2000"));
 }
 
-MainWindow::~MainWindow()
-{
-
-}
-
 void MainWindow::createMenu(){
     menuBar = new QMenuBar;
     fileMenu = new QMenu(tr("&File"), this);
@@ -38,8 +33,8 @@ void MainWindow::createMenu(){
     exitAction = fileMenu->addAction(tr("E&xit"));
     menuBar->addMenu(fileMenu);
 
-    connect(openAction, SIGNAL(triggered()), this, SLOT(openFile()));
-    connect(exitAction, SIGNAL(triggered()), this, SLOT(exit()));
+    connect(openAction, &QAction::triggered, this, &MainWindow::openFile);
+    connect(exitAction, &QAction::triggered, this, &QMainWindow::close);
 }
 
 void MainWindow::createDisplayGroup(){
@@ -64,12 +59,14 @@ void MainWindow::createFilterGroup(){
     pbGrayFilter = new QPushButton(tr("Grayscale"));
     pbBinFilter  = new QPushButton(tr("Binary Gray"));
     pbCelShade   = new QPushButton(tr("Cel Shade"));
+    pbScaleDown  = new QPushButton(tr("Scale Down"));
     pbReload     = new QPushButton(tr("Reload"));
     layout->addWidget(pbPixFilter);
     layout->addWidget(pbBlurFilter);
     layout->addWidget(pbGrayFilter);
     layout->addWidget(pbBinFilter);
     layout->addWidget(pbCelShade);
+    layout->addWidget(pbScaleDown);
     layout->addWidget(pbReload);
     layout->addStretch();
 
@@ -117,12 +114,12 @@ void MainWindow::createSettingsGroup(){
     glSliders->addWidget(incStepArrow,1,3);
     gbSliders->setLayout(glSliders);
 
-    connect(sIsovalue, &QSlider::valueChanged, this, &MainWindow::updateIsoValue);
-    connect(sStepsize, &QSlider::valueChanged, this, &MainWindow::updateStepValue);
-    connect(incIsoArrow, &QPushButton::pressed, this, &MainWindow::increaseIsoPressed);
-    connect(decIsoArrow, &QPushButton::pressed, this, &MainWindow::decreaseIsoPressed);
-    connect(incStepArrow, &QPushButton::pressed, this, &MainWindow::increaseStepPressed);
-    connect(decStepArrow, &QPushButton::pressed, this, &MainWindow::decreaseStepPressed);
+    connect(sIsovalue,    &QSlider::valueChanged, this, &MainWindow::updateIsoValue);
+    connect(sStepsize,    &QSlider::valueChanged, this, &MainWindow::updateStepValue);
+    connect(incIsoArrow,  &QPushButton::pressed,  this, &MainWindow::increaseIsoPressed);
+    connect(decIsoArrow,  &QPushButton::pressed,  this, &MainWindow::decreaseIsoPressed);
+    connect(incStepArrow, &QPushButton::pressed,  this, &MainWindow::increaseStepPressed);
+    connect(decStepArrow, &QPushButton::pressed,  this, &MainWindow::decreaseStepPressed);
     updateIsoValue(ISOVALUE);
     updateStepValue(STEPSIZE);
 
@@ -169,6 +166,8 @@ void MainWindow::openFile(){
                                             tr("Open Image"),
                                             "/home/dpost/Development/2019-01-Winter/Final/Pixelater2/",
                                             tr("Image Files (*.jpg, *.bmp)") );
+    if(fileName.isEmpty())
+        return;
     if(image){
         slImage->setCurrentIndex(0);
         slImage->removeWidget(image);
@@ -190,19 +189,24 @@ void MainWindow::updateStepValue(int value){
 }
 
 void MainWindow::createImageConnections(){
-    connect(pbBinFilter, &QPushButton::pressed, image, &ImageDisplay::BinaryGray );
-    connect(pbPixFilter, &QPushButton::pressed, image, &ImageDisplay::Pixelate );
-    connect(pbBlurFilter, &QPushButton::pressed, image, &ImageDisplay::Blur );
-    connect(pbCelShade, &QPushButton::pressed, image, &ImageDisplay::CelShade );
-
     connect(sIsovalue, &QSlider::sliderReleased, this, &MainWindow::setIsoValue);
     connect(sStepsize, &QSlider::sliderReleased, this, &MainWindow::setStepSize);
-    connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
+
+    connect(pbBinFilter,    &QPushButton::pressed, image, &ImageDisplay::BinaryGray );
+    connect(pbPixFilter,    &QPushButton::pressed, image, &ImageDisplay::Pixelate );
+    connect(pbBlurFilter,   &QPushButton::pressed, image, &ImageDisplay::Blur );
+    connect(pbCelShade,     &QPushButton::pressed, image, &ImageDisplay::CelShade );
+    connect(pbGrayFilter,   &QPushButton::pressed, image, &ImageDisplay::GrayScale);
+    connect(pbShowBinary,   &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
-    connect(pbReload, &QPushButton::pressed, image, &ImageDisplay::LoadImage);
-    connect(image, &ImageDisplay::imageLoaded, this, &MainWindow::setLayoutHeight);
-    connect(image, &ImageDisplay::processQueued, this, &MainWindow::updateProcessLabel);
+    connect(pbScaleDown,    &QPushButton::pressed, image, &ImageDisplay::ScaleDown);
+    connect(pbReload,       &QPushButton::pressed, image, &ImageDisplay::LoadImage);
+
     connect(rbBinary, &QRadioButton::toggled, image, &ImageDisplay::setBinaryInter);
+
+    connect(image, &ImageDisplay::imageLoaded,   this, &MainWindow::setLayoutHeight);
+    connect(image, &ImageDisplay::processQueued, this, &MainWindow::updateProcessLabel);
+
 }
 
 void MainWindow::increaseIsoPressed(){

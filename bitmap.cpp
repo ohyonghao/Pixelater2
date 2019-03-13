@@ -210,7 +210,9 @@ void cellShade(Bitmap& b)noexcept{
  * which give a more realistic grayscale than averaging.
  */
 void grayscale(Bitmap& b ) {
-    for_each(b.begin(),b.end(),[&b](auto& value){
+    int count = 0;
+    for_each(b.begin(),b.end(),[&b,&count](auto& value){
+        ++count;
         uint8_t y = *(&value+b.rmask())*0.216
                   + *(&value+b.gmask())*0.7152
                   + *(&value+b.bmask())*0.0722;
@@ -560,7 +562,18 @@ void scaleUp(Bitmap& o ) {
     }
     swap(o, move(b));
 }
-
+template<int GROUP, typename IN, typename OUT>
+void copy_every_n_in_groups_of_m(IN it, IN id, OUT ot, size_t n ){
+    cout << "COPY PARAMETERS" << n << " by " << GROUP << endl;
+    for(; it != id; it+=(n*GROUP)){
+        for(auto i=0; i< GROUP; ++i){
+            *ot = *(it+i);
+            //cout << " OT: " << to_string(*ot) << " IT: " << to_string(*(it+i));
+            ++ot;
+        }
+        //cout << endl;
+    }
+}
 /*
  * Scales down the image by halving the rows and columns.
  */
@@ -569,20 +582,36 @@ void scaleDown(Bitmap& o ) {
 
     b.setDimension( b.width() >> 1, b.height() >> 1 );
 
-    for( int j = 0; j < b.height(); ++j ){
-        for( int i = 0; i < b.width(); ++i ){
-            //
-            int x = i << 1;
-            int y = j << 1;
-
-            b.r( i, j ) =  o.r( x, y );
-            b.g( i, j ) =  o.g( x, y );
-            b.b( i, j ) =  o.b( x, y );
-            if( o.hasAlpha() ){
-                b.a( i, j ) = o.a( x, y );
-            }
-        }
+//  This would require having something to copy all colors
+//  over each interval, or expanding the copy_every_n_in_groups_of_m
+    vector<decltype (b.getBits().begin())> its;
+    for(int j =0; j < o.height(); j+=2 ){
+        its.push_back(o.getBits().begin()+(j*o.rowWidth()));
     }
+    auto ot = b.getBits().begin();
+    for(auto& it: its){
+        if(o.bpp() == 4){
+            copy_every_n_in_groups_of_m<4> (it,it+(o.rowWidth()),ot,2);
+        }else{
+            copy_every_n_in_groups_of_m<3> (it,it+(o.rowWidth()),ot,2);
+        }
+        ot+=b.rowWidth();
+    }
+//    for( int j = 0; j < b.height(); ++j ){
+//        for( int i = 0; i < b.width(); ++i ){
+//            //
+//            int x = i << 1;
+//            int y = j << 1;
+
+//            b.r( i, j ) =  o.r( x, y );
+//            b.g( i, j ) =  o.g( x, y );
+//            b.b( i, j ) =  o.b( x, y );
+//            if( o.hasAlpha() ){
+//                b.a( i, j ) = o.a( x, y );
+//            }
+//        }
+//    }
+
     swap( o, move(b) );
 }
 
@@ -860,7 +889,7 @@ void drawLine(Bitmap & o, const pt & p1, const pt & p2, uint32_t color, uint32_t
 	}
 }
 
-void binaryGray( Bitmap &o, const uint32_t isovalue){
+void binaryGray(Bitmap &o, const int32_t isovalue){
     grayscale(o);
     transform(o.getBits().begin(), o.getBits().end(),o.getBits().begin(),
               [&isovalue](auto value){return value > isovalue ? 255 : 0;});

@@ -63,6 +63,11 @@ void ImageProcessor::_LoadImage(){
 
 }
 
+void ImageProcessor::_ScaleDown(){
+    QMutexLocker locker(&mutex);
+    scaleDown(_image);
+}
+
 void ImageProcessor::_Blur(){
     QMutexLocker locker(&mutex);
     blur(_image);
@@ -81,7 +86,12 @@ void ImageProcessor::_BinaryGray(){
     QMutexLocker locker(&mutex);
     binaryGray(_image, _isovalue);
 }
+void ImageProcessor::_GrayScale(){
+    QMutexLocker locker(&mutex);
+    grayscale(_image);
+}
 void ImageProcessor::_toggleBinary(){
+    QMutexLocker locker(&mutex);
     displayBinary = !displayBinary;
 }
 
@@ -121,8 +131,8 @@ void ImageProcessor::run(){
                 break;
             case STEP:
                 if(!queued.isEmpty() && queued.first() == STEP){
-                // Skip processing if another command waits
-                continue;
+                    // Skip processing if another command waits
+                    continue;
                 }
                 break;
             case LOAD_IMAGE:
@@ -130,10 +140,17 @@ void ImageProcessor::run(){
                 break;
             case PROCESS:
                 break;
+            case SCALE_DOWN:
+                _ScaleDown();
+                break;
+            case GRAY_SCALE:
+                _GrayScale();
+                break;
             default:
-                continue;
+                goto WAIT;
             }
-            //if(queued.empty()){
+            //if(queued.empty())
+            {
                 processImage();
                 std::ostringstream imageArray;
                 mutex.lock();
@@ -141,7 +158,8 @@ void ImageProcessor::run(){
                 mutex.unlock();
                 QByteArray stream(imageArray.str().data(), imageArray.str().size());
                 emit imageProcessed(stream);
-            //}
+            }
+            WAIT:
             mutex.lock();
             if(queued.isEmpty()){
                 condition.wait(&mutex);

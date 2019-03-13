@@ -9,6 +9,7 @@ public:
     BitmapIterator();
     BitmapIterator(Bitmap*, bool end=false);
     BitmapIterator(const BitmapIterator&);
+    BitmapIterator(const BitmapIterator&&);
 
     // Our Operators
     BitmapIterator& operator=(const BitmapIterator&);
@@ -34,15 +35,15 @@ private:
 
 template<>
 struct std::iterator_traits<BitmapIterator>{
-    typedef uint8_t*                                 type;
-    typedef uint8_t*                                 value_type;
-    typedef uint8_t**                                pointer;
-    typedef uint8_t*&                                reference;
-    typedef size_t                                  size_type;
-    typedef ptrdiff_t                               difference_type;
+    typedef uint8_t*                          type;
+    typedef uint8_t*                          value_type;
+    typedef uint8_t**                         pointer;
+    typedef uint8_t*&                         reference;
+    typedef size_t                            size_type;
+    typedef ptrdiff_t                         difference_type;
     typedef std::forward_iterator_tag         iterator_category;
-    typedef BitmapIterator                          iterator;
-    typedef BitmapIterator                          const_iterator;
+    typedef BitmapIterator                    iterator;
+    typedef BitmapIterator                    const_iterator;
 };
 
 #endif // BITMAPITERATOR_H

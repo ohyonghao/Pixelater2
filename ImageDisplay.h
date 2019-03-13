@@ -35,16 +35,18 @@ private slots:
     void loadImage(const QByteArray &image);
 
 public slots:
-    void BinaryGray(){processor.BinaryGray();}
-    void Pixelate(){processor.Pixelate();}
-    void Blur(){processor.Blur();}
-    void Contour(){processor.Contour();}
-    void CelShade(){processor.CelShade();}
+    void BinaryGray(){processor.QueueProcess(ImageProcessor::BINARY_GRAY);}
+    void Pixelate(){processor.QueueProcess(ImageProcessor::PIXELATE);}
+    void Blur(){processor.QueueProcess(ImageProcessor::BLUR);}
+    void Contour(){processor.QueueProcess(ImageProcessor::CONTOUR);}
+    void CelShade(){processor.QueueProcess(ImageProcessor::CELSHADE);}
+    void ScaleDown(){processor.QueueProcess(ImageProcessor::SCALE_DOWN);}
     void setIsovalue(int isovalue){ processor.setIsovalue(isovalue);}
     void setStepSize(int stepsize){ processor.setStepSize(stepsize);}
     void setBinaryInter(bool usebininter){processor.setBinaryInter(usebininter);}
-    void toggleBinary();
-    void LoadImage(){processor.LoadImage();}
+    void toggleBinary(){processor.QueueProcess(ImageProcessor::TOGGLEBINARY);}
+    void LoadImage(){processor.QueueProcess(ImageProcessor::LOAD_IMAGE);}
+    void GrayScale(){processor.QueueProcess(ImageProcessor::GRAY_SCALE);}
     void save();
 };
 

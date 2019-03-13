@@ -1,10 +1,23 @@
 #include "BitmapIterator.h"
 #include "bitmap.h"
-
+#include <utility>
 BitmapIterator::BitmapIterator():
     _data{nullptr},
     _iterator{},
     _step{0}
+{
+}
+
+BitmapIterator::BitmapIterator(const BitmapIterator& rhs):
+    _data{rhs._data},
+    _iterator{rhs._iterator},
+    _step{rhs._step}
+{
+}
+BitmapIterator::BitmapIterator(const BitmapIterator&& rhs):
+    _data{std::move(rhs._data)},
+    _iterator{std::move(rhs._iterator)},
+    _step{rhs._step}
 {
 }
 

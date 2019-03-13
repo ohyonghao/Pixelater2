@@ -27,7 +27,3 @@ void ImageDisplay::save(){
     //of.open( (QString("image_contour.bmp")).toStdString() );
     //of << _image;
 }
-
-void ImageDisplay::toggleBinary(){
-    processor.toggleBinary();
-}
