@@ -28,6 +28,7 @@ private:
     ImageProcessor processor;
 
 signals:
+    void imageLoaded();
 
 private slots:
     void loadImage(const QByteArray &image);

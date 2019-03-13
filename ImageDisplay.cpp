@@ -16,10 +16,11 @@ ImageDisplay::ImageDisplay(QString filename, int isovalue, int stepsize, QWidget
     processor.start();
 }
 void ImageDisplay::loadImage(const QByteArray &stream){
-    bool success = pixmap.loadFromData(stream,"BMP");
+    pixmap.loadFromData(stream,"BMP");
     imageLabel->setPixmap(pixmap);
-    update();
-    qDebug() << (success ? "Loaded Successfully" : "Did not load");
+    imageLabel->resize(pixmap.size());
+
+    emit imageLoaded();
 }
 void ImageDisplay::save(){
     //std::ofstream of;

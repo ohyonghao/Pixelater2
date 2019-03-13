@@ -155,6 +155,8 @@ void MainWindow::createSettingsGroup(){
 
 void MainWindow::setLayoutHeight(){
     if(image){
+        auto iSize = image->size();
+        qDebug() << "Setting size: " << iSize;
         gbDisplay->setMinimumSize(image->size());
     }
 }
@@ -193,6 +195,7 @@ void MainWindow::createImageConnections(){
     connect(sStepsize, &QSlider::valueChanged, image, &ImageDisplay::setStepSize);
     connect(pbShowBinary, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
+    connect(image, &ImageDisplay::imageLoaded, this, &MainWindow::setLayoutHeight);
 }
 
 void MainWindow::increaseIsoPressed(){

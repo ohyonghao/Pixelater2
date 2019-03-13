@@ -34,7 +34,6 @@ if (!isRunning()) {
     }
 }
 void ImageProcessor::processImage(){
-    qDebug() << "ProcessImage entered";
     QMutexLocker locker(&mutex);
     // Load image
     if(displayBinary){
@@ -46,16 +45,15 @@ void ImageProcessor::processImage(){
     }
 
     contours(_cimage, _isovalue, _stepsize);
-    qDebug() << "ProcessImage exited";
 }
 
 void ImageProcessor::_LoadImage(){
 
     std::ifstream in;
     in.open(_filename.toStdString(), ios::binary);
+    mutex.lock();
     in >> _image;
     _cimage = _image;
-    mutex.lock();
     _bimage = _image;
     binaryGray(_bimage, _isovalue);
     mutex.unlock();
@@ -96,6 +94,8 @@ void ImageProcessor::_toggleBinary(){
 
 void ImageProcessor::run(){
     forever{
+        if( abort )
+            return;
         while(!queued.isEmpty()){
             qDebug() << "Processing Commands";
             qmutex.lock();

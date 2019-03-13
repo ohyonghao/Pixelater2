@@ -32,7 +32,6 @@ private:
     void createFilterGroup();
     void createSettingsGroup();
     void createImageConnections();
-    void setLayoutHeight();
 
     QWidget         *ui;
     QGridLayout     *mainlayout;
@@ -65,6 +64,8 @@ private:
     QAction         *openAction;
     QString         currentFileName;
 
+private slots:
+    void setLayoutHeight();
 public slots:
     void updateIsoValue(int);
     void updateStepValue(int);
