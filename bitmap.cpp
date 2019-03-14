@@ -564,14 +564,11 @@ void scaleUp(Bitmap& o ) {
 }
 template<int GROUP, typename IN, typename OUT>
 void copy_every_n_in_groups_of_m(IN it, IN id, OUT ot, size_t n ){
-    cout << "COPY PARAMETERS" << n << " by " << GROUP << endl;
     for(; it != id; it+=(n*GROUP)){
         for(auto i=0; i< GROUP; ++i){
             *ot = *(it+i);
-            //cout << " OT: " << to_string(*ot) << " IT: " << to_string(*(it+i));
             ++ot;
         }
-        //cout << endl;
     }
 }
 /*
@@ -611,7 +608,6 @@ void scaleDown(Bitmap& o ) {
 //            }
 //        }
 //    }
-
     swap( o, move(b) );
 }
 
