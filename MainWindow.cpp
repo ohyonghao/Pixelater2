@@ -164,7 +164,7 @@ void MainWindow::setLayoutHeight(){
 void MainWindow::openFile(){
     QString fileName = QFileDialog::getOpenFileName(this,
                                             tr("Open Image"),
-                                            "/home/dpost/Development/2019-01-Winter/Final/Pixelater2/",
+                                            QDir::homePath(),
                                             tr("Image Files (*.jpg, *.bmp)") );
     if(fileName.isEmpty())
         return;

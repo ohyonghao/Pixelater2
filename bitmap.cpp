@@ -349,7 +349,7 @@ void Bitmap::setDimension( int32_t width, int32_t height ){
 
     // Calculate RowSize
     uint32_t rowWidth   = ((_d.cDepth * _d.width + 31 ) >> 5 ) << 2;
-    uint32_t rowSize    = _d.cDepth * _d.width;
+    uint32_t rowSize    = _bpp * _d.width;
 
     // Calculate new size
     _d.rawSize = rowWidth * ( _d.height < 0 ? -_d.height: _d.height );
