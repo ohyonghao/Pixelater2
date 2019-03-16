@@ -47,8 +47,8 @@ istream& operator>>(istream& in, Bitmap& bitmap) {
     // of the image
 
     b._bpp = b.dibs.cDepth>>3;
-    b._rowSize = b._bpp*b.dibs.width;
-    b._rowWidth = ( ( b.dibs.cDepth * b.dibs.width + 31 ) >> 5 ) << 2;
+    b._rowSize = b.__rowSize( b._bpp, b.dibs.width);
+    b._rowWidth = b.__rowWidth(b.dibs.cDepth, b.dibs.width );
 
     b._bits.resize(b.dibs.rawSize);
 
@@ -348,11 +348,11 @@ void Bitmap::setDimension( int32_t width, int32_t height ){
     _d.width = width;
 
     // Calculate RowSize
-    uint32_t rowWidth   = ((_d.cDepth * _d.width + 31 ) >> 5 ) << 2;
-    uint32_t rowSize    = _bpp * _d.width;
+    uint32_t rowWidth   = __rowWidth(_d.cDepth, _d.width);
+    uint32_t rowSize    = __rowSize(_bpp, _d.width);
 
     // Calculate new size
-    _d.rawSize = rowWidth * ( _d.height < 0 ? -_d.height: _d.height );
+    _d.rawSize = __rawSize(_d.height, rowWidth);
 
     // Reset internal rpresentation
     if( _bits.size() != _d.rawSize )

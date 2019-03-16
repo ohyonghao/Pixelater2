@@ -131,6 +131,11 @@ private:
     uint8_t& getPixel( int x, int y, uint32_t mask );
     const uint8_t& getPixel( int x, int y, uint32_t mask )const;
 
+    // Calculate some settings
+    uint32_t __rowWidth(uint32_t colorDepth, int32_t width){return ((colorDepth * width + 31 ) >> 5 ) << 2;}
+    uint32_t __rowSize(uint32_t bpp, int32_t width){return bpp * width;}
+    uint32_t __rawSize(int32_t height, uint32_t rowWidth ){return rowWidth * ( height < 0 ? -height: height );}
+
 public:
     Bitmap() = default;
     Bitmap(const Bitmap&, bool noData = false);
