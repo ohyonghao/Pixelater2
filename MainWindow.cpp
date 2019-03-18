@@ -60,6 +60,10 @@ void MainWindow::createFilterGroup(){
     pbBinFilter  = new QPushButton(tr("Binary Gray"));
     pbCelShade   = new QPushButton(tr("Cel Shade"));
     pbScaleDown  = new QPushButton(tr("Scale Down"));
+    pbScaleUp    = new QPushButton(tr("Scale Up"));
+    pbRotate90   = new QPushButton(tr("Rotate 90"));
+    pbRotate180  = new QPushButton(tr("Rotate 180"));
+    pbRotate270  = new QPushButton(tr("Rotate 270"));
     pbReload     = new QPushButton(tr("Reload"));
     layout->addWidget(pbPixFilter);
     layout->addWidget(pbBlurFilter);
@@ -67,6 +71,10 @@ void MainWindow::createFilterGroup(){
     layout->addWidget(pbBinFilter);
     layout->addWidget(pbCelShade);
     layout->addWidget(pbScaleDown);
+    layout->addWidget(pbScaleUp);
+    layout->addWidget(pbRotate90);
+    layout->addWidget(pbRotate180);
+    layout->addWidget(pbRotate270);
     layout->addWidget(pbReload);
     layout->addStretch();
 
@@ -200,6 +208,10 @@ void MainWindow::createImageConnections(){
     connect(pbShowBinary,   &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbShowOriginal, &QPushButton::pressed, image, &ImageDisplay::toggleBinary);
     connect(pbScaleDown,    &QPushButton::pressed, image, &ImageDisplay::ScaleDown);
+    connect(pbScaleUp,      &QPushButton::pressed, image, &ImageDisplay::ScaleUp);
+    connect(pbRotate90,     &QPushButton::pressed, image, &ImageDisplay::Rot90);
+    connect(pbRotate180,    &QPushButton::pressed, image, &ImageDisplay::Rot180);
+    connect(pbRotate270,    &QPushButton::pressed, image, &ImageDisplay::Rot270);
     connect(pbReload,       &QPushButton::pressed, image, &ImageDisplay::LoadImage);
 
     connect(rbBinary, &QRadioButton::toggled, image, &ImageDisplay::setBinaryInter);

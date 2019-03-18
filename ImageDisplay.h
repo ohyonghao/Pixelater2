@@ -41,6 +41,10 @@ public slots:
     void Contour(){processor.QueueProcess(ImageProcessor::CONTOUR);}
     void CelShade(){processor.QueueProcess(ImageProcessor::CELSHADE);}
     void ScaleDown(){processor.QueueProcess(ImageProcessor::SCALE_DOWN);}
+    void ScaleUp(){processor.QueueProcess(ImageProcessor::SCALE_UP);}
+    void Rot90(){processor.QueueProcess(ImageProcessor::ROT90);}
+    void Rot180(){processor.QueueProcess(ImageProcessor::ROT180);}
+    void Rot270(){processor.QueueProcess(ImageProcessor::ROT270);}
     void setIsovalue(int isovalue){ processor.setIsovalue(isovalue);}
     void setStepSize(int stepsize){ processor.setStepSize(stepsize);}
     void setBinaryInter(bool usebininter){processor.setBinaryInter(usebininter);}

@@ -27,6 +27,10 @@ public:
                     LOAD_IMAGE,
                     PROCESS,
                     SCALE_DOWN,
+                    SCALE_UP,
+                    ROT90,
+                    ROT180,
+                    ROT270,
                     GRAY_SCALE
                    };
     ImageProcessor(QString filename, int isovalue, int stepsize, bool useBinaryInter, QObject *parent=nullptr);

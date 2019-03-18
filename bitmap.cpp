@@ -579,8 +579,6 @@ void scaleDown(Bitmap& o ) {
 
     b.setDimension( b.width() >> 1, b.height() >> 1 );
 
-//  This would require having something to copy all colors
-//  over each interval, or expanding the copy_every_n_in_groups_of_m
     vector<decltype (b.getBits().begin())> its;
     for(int j =0; j < o.height(); j+=2 ){
         its.push_back(o.getBits().begin()+(j*o.rowWidth()));
@@ -594,20 +592,6 @@ void scaleDown(Bitmap& o ) {
         }
         ot+=b.rowWidth();
     }
-//    for( int j = 0; j < b.height(); ++j ){
-//        for( int i = 0; i < b.width(); ++i ){
-//            //
-//            int x = i << 1;
-//            int y = j << 1;
-
-//            b.r( i, j ) =  o.r( x, y );
-//            b.g( i, j ) =  o.g( x, y );
-//            b.b( i, j ) =  o.b( x, y );
-//            if( o.hasAlpha() ){
-//                b.a( i, j ) = o.a( x, y );
-//            }
-//        }
-//    }
     swap( o, move(b) );
 }
 

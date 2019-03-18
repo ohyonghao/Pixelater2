@@ -46,6 +46,10 @@ private:
     QPushButton     *pbBinFilter;
     QPushButton     *pbCelShade;
     QPushButton     *pbScaleDown;
+    QPushButton     *pbScaleUp;
+    QPushButton     *pbRotate90;
+    QPushButton     *pbRotate180;
+    QPushButton     *pbRotate270;
     QPushButton     *pbReload;
     QLabel          *lIsovalue;
     QLabel          *lStepSize;
