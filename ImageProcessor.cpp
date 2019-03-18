@@ -15,7 +15,7 @@ ImageProcessor::ImageProcessor(QString filename, int isovalue, int stepsize, boo
     _stepsize{stepsize},
     _usebinaryinter{useBinaryInter}
 {
-    _queueProcess(LOAD_IMAGE);
+    _queueProcess(std::mem_fn(&ImageProcessor::_LoadImage));
 }
 
 ImageProcessor::~ImageProcessor(){
@@ -94,7 +94,28 @@ void ImageProcessor::_toggleBinary(){
     QMutexLocker locker(&mutex);
     displayBinary = !displayBinary;
 }
+void ImageProcessor::_ScaleUp(){
+    QMutexLocker locker(&mutex);
+    scaleUp(_image);
+}
+void ImageProcessor::_Rot90(){
+    QMutexLocker locker(&mutex);
+    rot90(_image);
+}
 
+void ImageProcessor::_Rot180(){
+    QMutexLocker locker(&mutex);
+    rot180(_image);
+}
+
+void ImageProcessor::_Rot270(){
+    QMutexLocker locker(&mutex);
+    rot270(_image);
+}
+
+void ImageProcessor::_Reprocess(){
+    //
+}
 void ImageProcessor::run(){
     forever{
         if( abort )
@@ -104,51 +125,7 @@ void ImageProcessor::run(){
             auto func = queued.takeFirst();
             qmutex.unlock();
             emit queueUpdated(queued.size());
-            switch(func){
-            case BINARY_GRAY:
-                _BinaryGray();
-                break;
-            case PIXELATE:
-                _Pixelate();
-                break;
-            case BLUR:
-                _Blur();
-                break;
-            case CONTOUR:
-                _Contour();
-                break;
-            case CELSHADE:
-                _CelShade();
-                break;
-            case TOGGLEBINARY:
-                _toggleBinary();
-                break;
-            case ISO:
-                if(!queued.isEmpty() && queued.first() == ISO){
-                    // Skip processing if another command waits
-                    continue;
-                }
-                break;
-            case STEP:
-                if(!queued.isEmpty() && queued.first() == STEP){
-                    // Skip processing if another command waits
-                    continue;
-                }
-                break;
-            case LOAD_IMAGE:
-                _LoadImage();
-                break;
-            case PROCESS:
-                break;
-            case SCALE_DOWN:
-                _ScaleDown();
-                break;
-            case GRAY_SCALE:
-                _GrayScale();
-                break;
-            default:
-                goto WAIT;
-            }
+            func(this);
             //if(queued.empty())
             {
                 processImage();
@@ -159,7 +136,6 @@ void ImageProcessor::run(){
                 QByteArray stream(imageArray.str().data(), imageArray.str().size());
                 emit imageProcessed(stream);
             }
-            WAIT:
             mutex.lock();
             if(queued.isEmpty()){
                 condition.wait(&mutex);
