@@ -37,7 +37,6 @@ HEADERS += \
         MainWindow.h \
         ImageDisplay.h\
         bitmap.h \
-        pixel.h \
         point.hpp \
         jarvisMarch.hpp \
     BitmapIterator.h \
