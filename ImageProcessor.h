@@ -23,11 +23,11 @@ public:
     void processImage();
 
     void setIsovalue(int isovalue){ isomutex.lock(); _isovalue = isovalue; isomutex.unlock();
-                                    _queueProcess(std::mem_fn(&ImageProcessor::_Reprocess)); }
+                                    _queueProcess(std::mem_fn(&ImageProcessor::Reprocess)); }
     void setStepSize(int stepsize){ isomutex.lock(); _stepsize = stepsize; isomutex.unlock();
-                                    _queueProcess(std::mem_fn(&ImageProcessor::_Reprocess));}
+                                    _queueProcess(std::mem_fn(&ImageProcessor::Reprocess));}
     void setBinaryInter( bool binaryInter ){binarymutex.lock(); _usebinaryinter = binaryInter; binarymutex.unlock() ;
-                                    _queueProcess(std::mem_fn(&ImageProcessor::_Reprocess));}
+                                    _queueProcess(std::mem_fn(&ImageProcessor::Reprocess));}
 
 signals:
     void imageProcessed( const QByteArray &image);
@@ -62,33 +62,33 @@ private:
     bool _usebinaryinter = true;
 
 public:
-
-    void _BinaryGray();
-    void _Pixelate();
-    void _Blur();
-    void _Contour();
-    void _CelShade();
-    void _toggleBinary();
-    void _LoadImage();
-    void _ScaleDown();
-    void _ScaleUp();
-    void _GrayScale();
-    void _restartThread();
-    void _Rot90();
-    void _Rot180();
-    void _Rot270();
-    void _Reprocess();
-
     // Processing functions
-    void QueueProcess(decltype(std::mem_fn<void(), ImageProcessor>(&ImageProcessor::_BinaryGray)) process){ _queueProcess(process);}
+    void BinaryGray();
+    void Pixelate();
+    void Blur();
+    void Contour();
+    void CelShade();
+    void toggleBinary();
+    void LoadImage();
+    void ScaleDown();
+    void ScaleUp();
+    void GrayScale();
+    void restartThread();
+    void Rot90();
+    void Rot180();
+    void Rot270();
+    void Reprocess();
+
+    typedef decltype(std::mem_fn<void(), ImageProcessor>(&ImageProcessor::BinaryGray)) mfptr;
+    void QueueProcess(mfptr process){ _queueProcess(process);}
 private:
 
-    QQueue<decltype(std::mem_fn<void(), ImageProcessor>(&ImageProcessor::_BinaryGray))> queued;
-    void _queueProcess(decltype(std::mem_fn<void(), ImageProcessor>(&ImageProcessor::_BinaryGray)) process){
+    QQueue<mfptr> queued;
+    void _queueProcess(mfptr process){
         QMutexLocker locker(&qmutex);
         queued.push_back(process);
         emit queueUpdated(queued.size());
-        _restartThread();}
+        restartThread();}
 
 };
 

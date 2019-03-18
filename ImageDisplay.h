@@ -36,22 +36,22 @@ private slots:
     void loadImage(const QByteArray &image);
 
 public slots:
-    void BinaryGray(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_BinaryGray));}
-    void Pixelate(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_Pixelate));}
-    void Blur(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_Blur));}
-    void Contour(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_Contour));}
-    void CelShade(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_CelShade));}
-    void ScaleDown(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_ScaleDown));}
-    void ScaleUp(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_ScaleUp));}
-    void Rot90(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_Rot90));}
-    void Rot180(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_Rot180));}
-    void Rot270(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_Rot270));}
+    void BinaryGray(){processor.QueueProcess(std::mem_fn(&ImageProcessor::BinaryGray));}
+    void Pixelate(){processor.QueueProcess(std::mem_fn(&ImageProcessor::Pixelate));}
+    void Blur(){processor.QueueProcess(std::mem_fn(&ImageProcessor::Blur));}
+    void Contour(){processor.QueueProcess(std::mem_fn(&ImageProcessor::Contour));}
+    void CelShade(){processor.QueueProcess(std::mem_fn(&ImageProcessor::CelShade));}
+    void ScaleDown(){processor.QueueProcess(std::mem_fn(&ImageProcessor::ScaleDown));}
+    void ScaleUp(){processor.QueueProcess(std::mem_fn(&ImageProcessor::ScaleUp));}
+    void Rot90(){processor.QueueProcess(std::mem_fn(&ImageProcessor::Rot90));}
+    void Rot180(){processor.QueueProcess(std::mem_fn(&ImageProcessor::Rot180));}
+    void Rot270(){processor.QueueProcess(std::mem_fn(&ImageProcessor::Rot270));}
     void setIsovalue(int isovalue){ processor.setIsovalue(isovalue);}
     void setStepSize(int stepsize){ processor.setStepSize(stepsize);}
     void setBinaryInter(bool usebininter){processor.setBinaryInter(usebininter);}
-    void toggleBinary(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_toggleBinary));}
-    void LoadImage(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_LoadImage));}
-    void GrayScale(){processor.QueueProcess(std::mem_fn(&ImageProcessor::_GrayScale));}
+    void toggleBinary(){processor.QueueProcess(std::mem_fn(&ImageProcessor::toggleBinary));}
+    void LoadImage(){processor.QueueProcess(std::mem_fn(&ImageProcessor::LoadImage));}
+    void GrayScale(){processor.QueueProcess(std::mem_fn(&ImageProcessor::GrayScale));}
     void save();
 };
 

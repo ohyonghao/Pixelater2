@@ -15,7 +15,7 @@ ImageProcessor::ImageProcessor(QString filename, int isovalue, int stepsize, boo
     _stepsize{stepsize},
     _usebinaryinter{useBinaryInter}
 {
-    _queueProcess(std::mem_fn(&ImageProcessor::_LoadImage));
+    _queueProcess(std::mem_fn(&ImageProcessor::LoadImage));
 }
 
 ImageProcessor::~ImageProcessor(){
@@ -26,7 +26,7 @@ ImageProcessor::~ImageProcessor(){
 
     wait();
 }
-void ImageProcessor::_restartThread(){
+void ImageProcessor::restartThread(){
 if (!isRunning()) {
         start(LowPriority);
     } else {
@@ -50,7 +50,7 @@ void ImageProcessor::processImage(){
     contours(_cimage, iso, stepsize, usebininter);
 }
 
-void ImageProcessor::_LoadImage(){
+void ImageProcessor::LoadImage(){
 
     std::ifstream in;
     in.open(_filename.toStdString(), ios::binary);
@@ -63,57 +63,57 @@ void ImageProcessor::_LoadImage(){
 
 }
 
-void ImageProcessor::_ScaleDown(){
+void ImageProcessor::ScaleDown(){
     QMutexLocker locker(&mutex);
     scaleDown(_image);
 }
 
-void ImageProcessor::_Blur(){
+void ImageProcessor::Blur(){
     QMutexLocker locker(&mutex);
     blur(_image);
 }
-void ImageProcessor::_Contour(){
+void ImageProcessor::Contour(){
 }
-void ImageProcessor::_CelShade(){
+void ImageProcessor::CelShade(){
     QMutexLocker locker(&mutex);
     cellShade(_image);
 }
-void ImageProcessor::_Pixelate(){
+void ImageProcessor::Pixelate(){
     QMutexLocker locker(&mutex);
     pixelate(_image);
 }
-void ImageProcessor::_BinaryGray(){
+void ImageProcessor::BinaryGray(){
     QMutexLocker locker(&mutex);
     binaryGray(_image, _isovalue);
 }
-void ImageProcessor::_GrayScale(){
+void ImageProcessor::GrayScale(){
     QMutexLocker locker(&mutex);
     grayscale(_image);
 }
-void ImageProcessor::_toggleBinary(){
+void ImageProcessor::toggleBinary(){
     QMutexLocker locker(&mutex);
     displayBinary = !displayBinary;
 }
-void ImageProcessor::_ScaleUp(){
+void ImageProcessor::ScaleUp(){
     QMutexLocker locker(&mutex);
     scaleUp(_image);
 }
-void ImageProcessor::_Rot90(){
+void ImageProcessor::Rot90(){
     QMutexLocker locker(&mutex);
     rot90(_image);
 }
 
-void ImageProcessor::_Rot180(){
+void ImageProcessor::Rot180(){
     QMutexLocker locker(&mutex);
     rot180(_image);
 }
 
-void ImageProcessor::_Rot270(){
+void ImageProcessor::Rot270(){
     QMutexLocker locker(&mutex);
     rot270(_image);
 }
 
-void ImageProcessor::_Reprocess(){
+void ImageProcessor::Reprocess(){
     //
 }
 void ImageProcessor::run(){
