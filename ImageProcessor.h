@@ -79,12 +79,12 @@ public:
     void Rot270();
     void Reprocess();
 
-    typedef decltype(std::mem_fn<void(), ImageProcessor>(&ImageProcessor::BinaryGray)) mfptr;
-    void QueueProcess(mfptr process){ _queueProcess(process);}
+    typedef decltype(std::mem_fn<void(), ImageProcessor>(&ImageProcessor::BinaryGray)) pmf;
+    void QueueProcess(pmf process){ _queueProcess(process);}
 private:
 
-    QQueue<mfptr> queued;
-    void _queueProcess(mfptr process){
+    QQueue<pmf> queued;
+    void _queueProcess(pmf process){
         QMutexLocker locker(&qmutex);
         queued.push_back(process);
         emit queueUpdated(queued.size());
